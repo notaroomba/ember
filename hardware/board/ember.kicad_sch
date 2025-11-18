@@ -10039,12 +10039,6 @@
 		(uuid "04080d95-d806-418f-bcbc-bac45f7fb006")
 	)
 	(junction
-		(at 116.84 113.03)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "07477c65-1885-4466-bd3f-30131612c052")
-	)
-	(junction
 		(at 303.53 29.21)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -10115,6 +10109,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "1f16ce65-2e0a-439e-84b0-ac042bc44a45")
+	)
+	(junction
+		(at 116.84 113.03)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "1f289651-4e97-4ad2-9202-fedf4e941549")
 	)
 	(junction
 		(at 386.08 44.45)
@@ -10409,12 +10409,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "688f20de-af21-47e6-8f8d-30632f393c5b")
-	)
-	(junction
-		(at 116.84 123.19)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "69a53da1-e76e-4a6d-9af9-ecdf1f17c48d")
 	)
 	(junction
 		(at 369.57 106.68)
@@ -10721,6 +10715,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ecd078f6-33ba-484e-9bdf-bb26db8021e1")
+	)
+	(junction
+		(at 116.84 123.19)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ee060df4-5b3c-4e7c-9e28-560a520eb5f8")
 	)
 	(junction
 		(at 71.12 273.05)
@@ -27969,7 +27969,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 153.3652 40.64 0)
 			(effects
 				(font
@@ -36412,7 +36412,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "PPHV"
+		(property "Value" "PPHV_R"
 			(at 22.86 170.18 0)
 			(effects
 				(font
@@ -36660,7 +36660,7 @@
 	)
 	(symbol
 		(lib_id "lcsc:HOLLR2512-3W-2MR-1%")
-		(at 116.84 118.11 270)
+		(at 116.84 118.11 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -36668,7 +36668,7 @@
 		(dnp no)
 		(uuid "e080496f-e2d3-4781-8e3c-c2cd508f8d5f")
 		(property "Reference" "R18"
-			(at 114.3 116.078 0)
+			(at 119.38 120.142 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -36677,7 +36677,7 @@
 			)
 		)
 		(property "Value" "HOLLR2512-3W-2MR-1%"
-			(at 117.094 87.63 0)
+			(at 116.586 148.59 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -36687,7 +36687,7 @@
 			)
 		)
 		(property "Footprint" "lcsc:RES-SMD_L6.4-W3.2-1"
-			(at 109.22 118.11 0)
+			(at 124.46 118.11 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -36714,7 +36714,7 @@
 			)
 		)
 		(property "LCSC Part" "C2994640"
-			(at 106.68 118.11 0)
+			(at 127 118.11 0)
 			(effects
 				(font
 					(size 1.27 1.27)
