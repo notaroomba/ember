@@ -10039,6 +10039,12 @@
 		(uuid "04080d95-d806-418f-bcbc-bac45f7fb006")
 	)
 	(junction
+		(at 116.84 113.03)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "07477c65-1885-4466-bd3f-30131612c052")
+	)
+	(junction
 		(at 303.53 29.21)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -10403,6 +10409,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "688f20de-af21-47e6-8f8d-30632f393c5b")
+	)
+	(junction
+		(at 116.84 123.19)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "69a53da1-e76e-4a6d-9af9-ecdf1f17c48d")
 	)
 	(junction
 		(at 369.57 106.68)
@@ -16014,6 +16026,16 @@
 	)
 	(wire
 		(pts
+			(xy 116.84 128.27) (xy 116.84 123.19)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ecaae23d-7121-4177-8cd6-ce1d8516ce6e")
+	)
+	(wire
+		(pts
 			(xy 261.62 50.8) (xy 246.38 50.8)
 		)
 		(stroke
@@ -16141,6 +16163,16 @@
 			(type default)
 		)
 		(uuid "f1cd40d2-6eb9-4073-836b-15a4a0f53a3c")
+	)
+	(wire
+		(pts
+			(xy 116.84 106.68) (xy 116.84 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f341816f-010e-4185-93b5-ee1c8bbece54")
 	)
 	(wire
 		(pts
@@ -28045,6 +28077,71 @@
 		)
 	)
 	(symbol
+		(lib_id "power:VBUS")
+		(at 116.84 128.27 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "524c51c5-4a94-48bc-88c7-e8b33460b5ae")
+		(property "Reference" "#PWR0101"
+			(at 116.84 124.46 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "PPHV"
+			(at 116.84 132.08 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 116.84 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 116.84 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VBUS\""
+			(at 116.84 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "bd7dca63-230a-45ba-9848-f085072608f8")
+		)
+		(instances
+			(project "ember"
+				(path "/8a6c6108-ba3a-4119-97a5-40ac844b74e3"
+					(reference "#PWR0101")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:C")
 		(at 137.16 64.77 0)
 		(unit 1)
@@ -34128,7 +34225,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "PPHV"
+		(property "Value" "PPHV_R"
 			(at 67.31 87.63 0)
 			(effects
 				(font
@@ -35394,6 +35491,71 @@
 			(project "ember"
 				(path "/8a6c6108-ba3a-4119-97a5-40ac844b74e3"
 					(reference "C31")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:VBUS")
+		(at 116.84 106.68 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "cabb7f73-dc44-4e7b-bfe3-0d9209bff590")
+		(property "Reference" "#PWR0100"
+			(at 116.84 110.49 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "PPHV_R"
+			(at 116.84 102.87 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 116.84 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 116.84 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VBUS\""
+			(at 116.84 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "b42c69c8-3128-4983-bdb4-913dbbdafe5c")
+		)
+		(instances
+			(project "ember"
+				(path "/8a6c6108-ba3a-4119-97a5-40ac844b74e3"
+					(reference "#PWR0100")
 					(unit 1)
 				)
 			)
