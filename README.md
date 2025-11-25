@@ -27,7 +27,7 @@ A high-performance USB-C powered reflow hotplate with Bluetooth connectivity and
   <a href="#license">License</a>
 </p>
 
-<img src="blender/render2.png" alt="Ember Render" width="800"/>
+<img src="blender/render.png" alt="Ember Render" width="800"/>
 
 ## Key Features
 
@@ -88,6 +88,7 @@ The flexible heater connects to the main PCB via screw terminals and sits on an 
 
 ## 3D Renders
 
+<img src="blender/render.png" alt="Render 1" width="800"/>
 <img src="blender/render1.png" alt="Render 1" width="800"/>
 <img src="blender/render2.png" alt="Render 2" width="800"/>
 
