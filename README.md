@@ -91,8 +91,10 @@ The flexible heater connects to the main PCB via screw terminals and sits on an 
 ## 3D Renders
 
 <img src="blender/render.png" alt="Render 1" width="800"/>
+<img src="blender/render3.png" alt="Render 2" width="800"/>
 <img src="blender/render1.png" alt="Render 1" width="800"/>
 <img src="blender/render2.png" alt="Render 2" width="800"/>
+
 
 ## Credits
 
