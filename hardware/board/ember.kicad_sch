@@ -24272,6 +24272,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C96273"
+			(at 83.82 212.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "8d8539de-bd20-40d5-8812-609b8f2503c5")
 		)
@@ -31994,6 +32003,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C852970"
+			(at 43.18 201.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "ac7be44e-f092-4fc2-a02c-df50bdfc139e")
 		)
@@ -32276,7 +32294,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 368.808 215.9 90)
 			(effects
 				(font
@@ -32295,6 +32313,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 367.03 215.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C153298"
 			(at 367.03 215.9 0)
 			(effects
 				(font
@@ -34235,6 +34262,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C852750"
+			(at 63.5 212.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "50a3d84f-4895-4f31-822e-72f3281c8244")
 		)
@@ -35389,6 +35425,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C2998174"
+			(at 20.32 212.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "09f428a8-1f60-4a75-abc2-d90f4e9b868b")
 		)
@@ -36413,6 +36458,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 83.82 201.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C2998070"
 			(at 83.82 201.93 0)
 			(effects
 				(font
@@ -37951,6 +38005,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C2998070"
+			(at 43.18 212.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "5fa10346-0022-4a35-8846-b33860eafd1d")
 		)
@@ -38012,6 +38075,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 20.32 201.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C3013157"
 			(at 20.32 201.93 0)
 			(effects
 				(font
