@@ -86,7 +86,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "1cf52884-48a3-4e0c-8e3c-acf385cb7775")
-		(at 167.275 248.75 180)
+		(at 167.275 248.46425 180)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R2"
@@ -286,7 +286,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D4.0mm"
 		(layer "F.Cu")
 		(uuid "92860f6c-7b34-41ae-8c81-e9d320d9ef40")
-		(at 172.3 250.3)
+		(at 172.3 250.01425)
 		(descr "SMD pad as test Point, diameter 4.0mm")
 		(tags "test point SMD pad")
 		(property "Reference" "J2"
@@ -389,14 +389,14 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "aa61f8bf-452e-47bb-8486-527f664e8ba9")
-		(at 167.275 154.175 180)
+		(at 167.275 194.1875 180)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R1"
 			(at 0 -1.65 0)
 			(layer "F.SilkS")
 			(hide yes)
-			(uuid "19cc641a-a683-4ac7-961e-4ac56c0ce9d0")
+			(uuid "0d85a4d0-00e0-4bdb-ac5f-ac3cf8eb2dd8")
 			(effects
 				(font
 					(size 1 1)
@@ -407,7 +407,7 @@
 		(property "Value" "R"
 			(at 0 1.65 0)
 			(layer "F.Fab")
-			(uuid "de8ad30f-ad4d-4267-a625-e3121f637406")
+			(uuid "e925eb4e-0585-4b68-b46f-299306b9c748")
 			(effects
 				(font
 					(size 1 1)
@@ -419,7 +419,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8521ef6f-045f-45a1-95f7-5689ea973978")
+			(uuid "142247cb-ec6f-4c97-b974-e47f91e56aa6")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -431,7 +431,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "25b6daa7-0907-4a48-b060-dbfa8bf31405")
+			(uuid "c5cfd3a6-6f96-4c76-a89c-2adc0552da02")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -589,7 +589,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D4.0mm"
 		(layer "F.Cu")
 		(uuid "b7934dea-93f8-4827-a483-b19e29f1b431")
-		(at 162.25 250.3)
+		(at 162.25 250.01425)
 		(descr "SMD pad as test Point, diameter 4.0mm")
 		(tags "test point SMD pad")
 		(property "Reference" "J1"
@@ -689,89 +689,89 @@
 		)
 		(embedded_fonts no)
 	)
-	(gr_arc
-		(start 267.6 244.175)
-		(mid 264.671068 251.246068)
-		(end 257.6 254.175)
-		(stroke
-			(width 0.05)
-			(type default)
-		)
-		(layer "Edge.Cuts")
-		(uuid "218b5871-ef1f-4df2-9b2c-f802292e517a")
-	)
 	(gr_line
-		(start 67.6 244.175)
-		(end 67.6 64.175)
+		(start 227.275 139.1875)
+		(end 227.275 249.1875)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "4a92fe60-8f50-4a75-98da-1ea793cb4aaf")
-	)
-	(gr_line
-		(start 267.6 64.175)
-		(end 267.6 244.175)
-		(stroke
-			(width 0.05)
-			(type default)
-		)
-		(layer "Edge.Cuts")
-		(uuid "51d96569-90e9-4a21-a519-297596775720")
+		(uuid "15560fd6-4124-4c72-97ec-5700f1427fd5")
 	)
 	(gr_arc
-		(start 67.6 64.175)
-		(mid 70.528932 57.103932)
-		(end 77.6 54.175)
+		(start 227.275 249.1875)
+		(mid 225.810534 252.723034)
+		(end 222.275 254.1875)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "6af8d776-1ffa-430f-bc00-a8684d5c8449")
-	)
-	(gr_arc
-		(start 257.6 54.175)
-		(mid 264.671068 57.103932)
-		(end 267.6 64.175)
-		(stroke
-			(width 0.05)
-			(type default)
-		)
-		(layer "Edge.Cuts")
-		(uuid "7c2b155d-d73b-4566-b47d-57e9e73c8b78")
+		(uuid "2c94eeb8-bb31-45b3-938e-89510e749733")
 	)
 	(gr_line
-		(start 257.6 254.175)
-		(end 77.6 254.175)
+		(start 107.275 249.1875)
+		(end 107.275 139.1875)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "7e42bb23-fc08-4966-b1d3-0d8430811a29")
+		(uuid "5416a3b6-dc14-48f8-a5c8-271e23c17314")
 	)
 	(gr_arc
-		(start 77.6 254.175)
-		(mid 70.528932 251.246068)
-		(end 67.6 244.175)
+		(start 107.275 139.1875)
+		(mid 108.739466 135.651966)
+		(end 112.275 134.1875)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "b73094c7-a13e-47b3-8e00-3bf2ab2b2297")
+		(uuid "57568072-86b6-441f-8b34-869af45454f7")
+	)
+	(gr_arc
+		(start 222.275 134.1875)
+		(mid 225.810534 135.651966)
+		(end 227.275 139.1875)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "969172b1-114d-4637-a467-17089693d9a1")
+	)
+	(gr_arc
+		(start 112.275 254.1875)
+		(mid 108.739466 252.723034)
+		(end 107.275 249.1875)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "bfc9e757-806d-48f9-800a-72186c22af84")
 	)
 	(gr_line
-		(start 77.6 54.175)
-		(end 257.6 54.175)
+		(start 222.275 254.1875)
+		(end 112.275 254.1875)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "e7ea4961-ddd9-4f34-81ca-9814cf332b06")
+		(uuid "c189e34c-c081-466e-bc5d-1a295f48b319")
+	)
+	(gr_line
+		(start 112.275 134.1875)
+		(end 222.275 134.1875)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "fae52a73-007a-46b1-ae1c-32db46a4e0a6")
 	)
 	(embedded_fonts no)
 )
