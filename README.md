@@ -33,7 +33,7 @@ A high-performance USB-C powered reflow hotplate with Bluetooth connectivity and
 
 - **USB-C Power Delivery** up to 100W (20V) using TI's TPS25730D
 - **STM32WB55CG** microcontroller with Bluetooth support
-- **Large ~~400mm x 400mm~~ 200mm x 200mm flexible heatbed** for big PCB reflow
+- **Large ~~400mm x 400mm~~ ~~200mm x 200mm~~ 120mm x 120mm (for now) flexible heatbed** for big PCB reflow
 - **Dual temperature sensing** with MAX6675 thermocouple and PT1000 RTD
 - **OLED display** with rotary encoder for easy control and preset management
 - **NFC support** for wireless temperature profile transfer and preset storage
