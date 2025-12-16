@@ -79,12 +79,21 @@ Core/Src/heater.c \
 Core/Src/input.c \
 Core/Src/main.c \
 Core/Src/nfc.c \
+Core/Src/rtd.c \
 Core/Src/stm32wbxx_hal_msp.c \
 Core/Src/stm32wbxx_it.c \
 Core/Src/syscalls.c \
 Core/Src/sysmem.c \
 Core/Src/system_stm32wbxx.c \
+Core/Src/thermocouple.c \
 Core/Src/utils.c \
+Drivers/INA226/driver_ina226.c \
+Drivers/INA226/driver_ina226_basic.c \
+Drivers/INA226/driver_ina226_interface.c \
+Drivers/MAX31865/max31865.c \
+Drivers/MAX6675/driver_max6675.c \
+Drivers/MAX6675/driver_max6675_basic.c \
+Drivers/MAX6675/driver_max6675_interface.c \
 Drivers/NT3H2111/nt3h.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_cortex.c \
@@ -217,6 +226,9 @@ C_INCLUDES =  \
 -ICore/Inc \
 -IDrivers/CMSIS/Device/ST/STM32WBxx/Include \
 -IDrivers/CMSIS/Include \
+-IDrivers/INA226 \
+-IDrivers/MAX31865 \
+-IDrivers/MAX6675 \
 -IDrivers/NT3H2111 \
 -IDrivers/STM32WBxx_HAL_Driver/Inc \
 -IDrivers/STM32WBxx_HAL_Driver/Inc/Legacy \
@@ -264,7 +276,7 @@ LIBDIR = \
 
 
 # Additional LD Flags from config file
-ADDITIONALLDFLAGS = -Wl,--print-memory-usage -specs=nano.specs 
+ADDITIONALLDFLAGS = -Wl,--print-memory-usage,-u _printf_float -specs=nano.specs 
 
 LDFLAGS = $(MCU) $(ADDITIONALLDFLAGS) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIRECTORY)/$(TARGET).map,--cref -Wl,--gc-sections
 

@@ -31,6 +31,11 @@
 #include "heater.h"
 #include "tmp116.h"
 #include "nfc.h"
+#include "driver_ina226_basic.h"
+
+#include "rtd.h"
+
+#include "thermocouple.h"
 
 /* USER CODE END Includes */
 
@@ -69,6 +74,7 @@ Speaker_Handle *speaker = NULL;
 TMP116_Handle_t tmp116;
 static uint32_t last_temp_read = 0;
 static uint32_t last_nfc_poll = 0;
+static uint32_t last_ina226_poll = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -242,6 +248,22 @@ int main(void)
   //   // Melody still playing
   // }
 
+  // Initialize INA226 on I2C1 (bus voltage/current monitor)
+  // 3W 2mΩ SMD ±50ppm/℃ Current Sense Resistor ±1% 2512
+  // if (ina226_basic_init(INA226_ADDRESS_0, 0.002) == 0) {
+  //   print("INA226: OK\r\n");
+  // } else {
+  //   print("INA226: FAILED\r\n");
+  // }
+
+
+  // Initialize RTD (MAX31865) on SPI1
+  RTD_Init();
+  print("RTD: MAX31865 initialized\r\n");
+
+  // Initialize Thermocouple (MAX6675) on SPI2
+  Thermocouple_Init();
+  print("Thermocouple: MAX6675 initialized\r\n");
 
   /* USER CODE END 2 */
 
@@ -302,6 +324,45 @@ int main(void)
       }
     }
     
+    // Poll INA226 for current/voltage every 500ms
+    // if ((HAL_GetTick() - last_ina226_poll) >= 500) {
+    //   last_ina226_poll = HAL_GetTick();
+    //   float bus_mv = 0, current_ma = 0, power_mw = 0;
+    //   if (ina226_basic_read(&bus_mv, &current_ma, &power_mw) == 0) {
+    //     print("INA226: %.2f mV, %.2f mA, %.2f mW\r\n", bus_mv, current_ma, power_mw);
+    //   } else {
+    //     print("INA226: read failed\r\n");
+    //   }
+    // }
+    
+
+    // Poll RTD (MAX31865) for temperature every 500ms
+    // static uint32_t last_rtd_poll = 0;
+    // if ((HAL_GetTick() - last_rtd_poll) >= 500) {
+    //   last_rtd_poll = HAL_GetTick();
+    //   float rtd_temp = RTD_ReadCelsius();
+    //   float rtd_ohms = RTD_ReadOhms();
+    //   if (!RTD_Fault()) {
+    //     print("RTD: %.2f C, %.2f Ohms\r\n", rtd_temp, rtd_ohms);
+    //   } else {
+    //     print("RTD: FAULT (code 0x%02X)\r\n", RTD_FaultCode());
+    //     RTD_ClearFault();
+    //   }
+    // }
+
+
+    // Poll Thermocouple (MAX6675) for temperature every 500ms
+    // static uint32_t last_tc_poll = 0;
+    // if ((HAL_GetTick() - last_tc_poll) >= 500) {
+    //   last_tc_poll = HAL_GetTick();
+    //   float tc_temp = Thermocouple_ReadCelsius();
+    //   if (Thermocouple_Ok()) {
+    //     print("Thermocouple: %.2f C\r\n", tc_temp);
+    //   } else {
+    //     print("Thermocouple: read failed\r\n");
+    //   }
+    // }
+
     // Other main loop tasks here...
     
     /* USER CODE END WHILE */
@@ -647,7 +708,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2.Init.NSS = SPI_NSS_HARD_INPUT;
+  hspi2.Init.NSS = SPI_NSS_HARD_OUTPUT;
   hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -901,6 +962,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

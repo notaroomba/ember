@@ -48,7 +48,7 @@ assemblyFlags:
   - -ffunction-sections
 
 linkerFlags: 
-  - -Wl,--print-memory-usage
+  - -Wl,--print-memory-usage,-u _printf_float
 
 
 # libraries to be included. The -l prefix to the library will be automatically added.
@@ -84,6 +84,9 @@ includeDirectories:
   - Drivers/Speaker/**
   - Drivers/TMP116/**
   - Drivers/NT3H2111/**
+  - Drivers/INA226/**
+  - Drivers/MAX31865/**
+  - Drivers/MAX6675/**
 
 
 # Files that should be included in the compilation.
@@ -99,6 +102,9 @@ sourceFiles:
   - Drivers/Speaker/**
   - Drivers/TMP116/**
   - Drivers/NT3H2111/**
+  - Drivers/INA226/**
+  - Drivers/MAX31865/**
+  - Drivers/MAX6675/**
 
 
 # When no makefile is present it will show a warning pop-up.

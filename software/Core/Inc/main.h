@@ -61,6 +61,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define CURRENT_ALERT_Pin GPIO_PIN_13
 #define CURRENT_ALERT_GPIO_Port GPIOC
+#define CURRENT_ALERT_EXTI_IRQn EXTI15_10_IRQn
 #define ENC_A_Pin GPIO_PIN_0
 #define ENC_A_GPIO_Port GPIOC
 #define BUTTON_Pin GPIO_PIN_1

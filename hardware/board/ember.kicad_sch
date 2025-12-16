@@ -9704,6 +9704,16 @@
 		)
 		(uuid "762c8209-2a4f-42a2-8ee3-006eebd17e16")
 	)
+	(text "ADDRESS: 0x40"
+		(exclude_from_sim no)
+		(at 152.4 126.746 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "ad4335a1-91a0-4c98-adfc-b0f1cd35dac2")
+	)
 	(text "3V3 BUCK CONVERTER"
 		(exclude_from_sim no)
 		(at 52.07 241.3 0)
@@ -9715,6 +9725,16 @@
 			)
 		)
 		(uuid "bbf63980-c735-470e-99db-ac167b1990b9")
+	)
+	(text "ADDRESS: 1001000x"
+		(exclude_from_sim no)
+		(at 182.88 247.396 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "d19e9611-4cb5-48df-a520-a82ee3278d51")
 	)
 	(text "HEATBED CONTROL"
 		(exclude_from_sim no)
@@ -10453,6 +10473,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ca772667-7250-430c-a086-f853024eb309")
+	)
+	(junction
+		(at 133.35 99.06)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d3e208a2-b00e-451a-b66b-eef6f1050384")
 	)
 	(junction
 		(at 73.66 36.83)
@@ -15233,6 +15259,16 @@
 			(color 132 0 0 1)
 		)
 		(uuid "c67e9161-c101-4e28-b03c-f96e5a5e0c10")
+	)
+	(wire
+		(pts
+			(xy 133.35 97.79) (xy 133.35 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c6d47ff0-2d15-480a-92a3-71044e4d6dd8")
 	)
 	(wire
 		(pts
@@ -25424,6 +25460,71 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+3.3V")
+		(at 133.35 97.79 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "1ed24afd-f8fb-4ef6-a81b-156c6000c99e")
+		(property "Reference" "#PWR0103"
+			(at 133.35 101.6 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3.3V"
+			(at 133.35 93.726 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 133.35 97.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 133.35 97.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
+			(at 133.35 97.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "ebe2f1c6-c42c-4e0d-a91d-ee38ee771109")
+		)
+		(instances
+			(project "ember"
+				(path "/8a6c6108-ba3a-4119-97a5-40ac844b74e3"
+					(reference "#PWR0103")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Sensor_Temperature:MAX31865xTP")
 		(at 342.9 226.06 0)
 		(unit 1)
@@ -25439,7 +25540,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
 			)
 		)
 		(property "Value" "MAX31865xTP"
@@ -25449,7 +25549,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
 			)
 		)
 		(property "Footprint" "Package_DFN_QFN:TQFN-20-1EP_5x5mm_P0.65mm_EP3.25x3.25mm"
