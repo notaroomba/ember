@@ -23,10 +23,14 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "usbd_cdc_if.h"
-#include <stdarg.h>
+#include "config.h"
+#include "utils.h"
 #include "tps25730_driver.h"
 #include "speaker.h"
+#include "input.h"
+#include "heater.h"
+#include "tmp116.h"
+#include "nfc.h"
 
 /* USER CODE END Includes */
 
@@ -62,8 +66,9 @@ TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN PV */
 TPS25730_Handle *tps_handle = NULL;
 Speaker_Handle *speaker = NULL;
- int32_t CH1_DC = 0;
- bool toggle = false;
+TMP116_Handle_t tmp116;
+static uint32_t last_temp_read = 0;
+static uint32_t last_nfc_poll = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,19 +90,7 @@ static void MX_RF_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void print(const char* format, ...) {
-    char buffer[256];
-    va_list args;
-    
-    va_start(args, format);
-    int len = vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-    
-    if (len > 0 && len < (int)sizeof(buffer)) {
-        CDC_Transmit_FS((uint8_t *)buffer, len);
-    }
-    HAL_Delay(10); // Small delay to ensure transmission
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -143,7 +136,34 @@ int main(void)
   MX_USB_Device_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
+  
   HAL_Delay(1000);
+  
+  // Initialize input handling (encoder + button)
+  if (!Input_Init()) {
+    print("Input: Init FAILED\r\n");
+    Error_Handler();
+  }
+  
+  // Initialize heater PWM control
+  Heater_Init();
+  Heater_Off();
+  
+  // Initialize TMP119 temperature sensor on I2C3
+  if (TMP116_Init(&tmp116, &hi2c3, TMP116_I2C_ADDRESS) == TMP116_OK) {
+    print("TMP119: OK\r\n");
+  } else {
+    print("TMP119: FAILED\r\n");
+  }
+  
+  // Initialize NT3H2111 NFC tag on I2C3
+  if (NFC_Init() == NFC_OK) {
+    // if (!NFC_HasContent()) {
+    //   NFC_WriteText("Ember V1");
+    // }
+    NFC_RefreshHash();  // Sync hash with current memory state
+  }
+
   print("Ember V1!\r\n");
   
   // Initialize TPS25730 on I2C1 (assuming address 0x20)
@@ -152,7 +172,7 @@ int main(void)
     print("TPS25730: Init FAILED\r\n");
   }
   
-  HAL_Delay(2000);
+  HAL_Delay(250);
   
   if (tps_handle != NULL) {
     uint32_t voltage_mv, current_ma;
@@ -184,7 +204,7 @@ int main(void)
     // Request 20V @ 5A
     print("Requesting 20V @ 5A...\r\n");
     if (TPS25730_RequestVoltage(tps_handle, 20000, 5000, 5000)) {
-      HAL_Delay(1000);
+      HAL_Delay(250);
       
       // Get updated voltage
       if (TPS25730_GetActiveVoltage(tps_handle, &voltage_mv, &current_ma)) {
@@ -201,26 +221,27 @@ int main(void)
   speaker = Speaker_Init(&htim1, TIM_CHANNEL_1, 64000000);
   
   // Jingle Bells melody
-  const Speaker_Note jingle_bells[] = {
-    // "Jingle bells, jingle bells"
-    {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 400},
-    {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 400},
-    // "Jingle all the way"
-    {NOTE_E5, 200}, {NOTE_G5, 200}, {NOTE_C5, 200}, {NOTE_D5, 200}, {NOTE_E5, 600},
-    {NOTE_REST, 200},
-    // "Oh what fun it is to ride"
-    {NOTE_F5, 200}, {NOTE_F5, 200}, {NOTE_F5, 200}, {NOTE_F5, 200},
-    {NOTE_F5, 200}, {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 100}, {NOTE_E5, 100},
-    // "In a one horse open sleigh"
-    {NOTE_E5, 200}, {NOTE_D5, 200}, {NOTE_D5, 200}, {NOTE_E5, 200}, {NOTE_D5, 400}, {NOTE_G5, 400},
-  };
+  // const Speaker_Note jingle_bells[] = {
+  //   // "Jingle bells, jingle bells"
+  //   {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 400},
+  //   {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 400},
+  //   // "Jingle all the way"
+  //   {NOTE_E5, 200}, {NOTE_G5, 200}, {NOTE_C5, 200}, {NOTE_D5, 200}, {NOTE_E5, 600},
+  //   {NOTE_REST, 200},
+  //   // "Oh what fun it is to ride"
+  //   {NOTE_F5, 200}, {NOTE_F5, 200}, {NOTE_F5, 200}, {NOTE_F5, 200},
+  //   {NOTE_F5, 200}, {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 100}, {NOTE_E5, 100},
+  //   // "In a one horse open sleigh"
+  //   {NOTE_E5, 200}, {NOTE_D5, 200}, {NOTE_D5, 200}, {NOTE_E5, 200}, {NOTE_D5, 400}, {NOTE_G5, 400},
+  // };
   
-  Speaker_PlayMelody(speaker, jingle_bells, sizeof(jingle_bells)/sizeof(jingle_bells[0]));
+  // Speaker_PlayMelody(speaker, jingle_bells, sizeof(jingle_bells)/sizeof(jingle_bells[0]));
   
-  // Wait for melody to finish
-  while (Speaker_Update(speaker)) {
-    // Melody still playing
-  }
+  // // Wait for melody to finish
+  // while (Speaker_Update(speaker)) {
+  //   // Melody still playing
+  // }
+
 
   /* USER CODE END 2 */
 
@@ -228,8 +249,61 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // Main loop - add your code here
-
+    // Poll inputs (non-blocking)
+    Input_Poll();
+    
+    // Handle encoder events
+    if (input_encoder_cw) {
+      input_encoder_cw = false;
+      print("Encoder CW, position: %ld\r\n", input_encoder_position);
+      // TODO: Handle clockwise rotation
+    }
+    if (input_encoder_ccw) {
+      input_encoder_ccw = false;
+      print("Encoder CCW, position: %ld\r\n", input_encoder_position);
+      // TODO: Handle counter-clockwise rotation
+    }
+    
+    // Handle button events
+    if (input_button_pressed) {
+      input_button_pressed = false;
+      print("Button short press! Position: %ld\r\n", input_encoder_position);
+      // TODO: Handle short press (e.g., select/confirm)
+    }
+    if (input_button_long_pressed) {
+      input_button_long_pressed = false;
+      print("Button long press!\r\n");
+      // TODO: Handle long press (e.g., back/cancel)
+    }
+    
+    // Poll temperature sensor periodically
+    // if ((HAL_GetTick() - last_temp_read) >= TEMP_READ_INTERVAL_MS) {
+    //   last_temp_read = HAL_GetTick();
+    //   float temperature;
+    //   if (TMP116_GetTemperature(&tmp116, &temperature) == TMP116_OK) {
+    //     print("Temp: %d.%02d C\r\n", (int)temperature, (int)((temperature - (int)temperature) * 100));
+    //   }
+    // }
+    
+    // Poll NFC for field detection and data changes
+    if ((HAL_GetTick() - last_nfc_poll) >= NFC_POLL_INTERVAL_MS) {
+      last_nfc_poll = HAL_GetTick();
+      NFC_Events_t nfc_events;
+      if (NFC_Poll(&nfc_events) == NFC_OK) {
+        if (nfc_events.data_changed) {
+          // Read first 16 bytes of user memory to see what changed
+          uint8_t nfc_data[16];
+          if (NFC_ReadMemory(0, nfc_data, sizeof(nfc_data)) == NFC_OK) {
+            print("NFC Data: %02X %02X %02X %02X %02X %02X %02X %02X\r\n",
+                  nfc_data[0], nfc_data[1], nfc_data[2], nfc_data[3],
+                  nfc_data[4], nfc_data[5], nfc_data[6], nfc_data[7]);
+          }
+        }
+      }
+    }
+    
+    // Other main loop tasks here...
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -439,8 +513,8 @@ static void MX_LPTIM1_Init(void)
   hlptim1.Instance = LPTIM1;
   hlptim1.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
   hlptim1.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV1;
-  hlptim1.Init.UltraLowPowerClock.Polarity = LPTIM_CLOCKPOLARITY_RISING;
-  hlptim1.Init.UltraLowPowerClock.SampleTime = LPTIM_CLOCKSAMPLETIME_DIRECTTRANSITION;
+  hlptim1.Init.UltraLowPowerClock.Polarity = LPTIM_CLOCKPOLARITY_RISING_FALLING;
+  hlptim1.Init.UltraLowPowerClock.SampleTime = LPTIM_CLOCKSAMPLETIME_2TRANSITIONS;
   hlptim1.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
   hlptim1.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
   hlptim1.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
@@ -693,11 +767,11 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
+  htim2.Init.Prescaler = 6399;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -726,7 +800,14 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-
+  // Reconfigure TIM2 for heater PWM using config.h values
+  // PWM freq = TIM_CLK / ((PSC+1) * (ARR+1))
+  htim2.Init.Prescaler = HEATER_TIM_PRESCALER;
+  htim2.Init.Period = HEATER_TIM_PERIOD;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK) {
+    Error_Handler();
+  }
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
 

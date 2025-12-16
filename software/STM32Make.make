@@ -75,12 +75,17 @@ endif
 ######################################
 # C sources
 C_SOURCES =  \
+Core/Src/heater.c \
+Core/Src/input.c \
 Core/Src/main.c \
+Core/Src/nfc.c \
 Core/Src/stm32wbxx_hal_msp.c \
 Core/Src/stm32wbxx_it.c \
 Core/Src/syscalls.c \
 Core/Src/sysmem.c \
 Core/Src/system_stm32wbxx.c \
+Core/Src/utils.c \
+Drivers/NT3H2111/nt3h.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_cortex.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_dma.c \
@@ -107,6 +112,7 @@ Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_tim_ex.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_ll_rcc.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_ll_usb.c \
 Drivers/Speaker/speaker.c \
+Drivers/TMP116/tmp116.c \
 Drivers/TPS25730/tps25730_driver.c \
 Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
@@ -211,9 +217,11 @@ C_INCLUDES =  \
 -ICore/Inc \
 -IDrivers/CMSIS/Device/ST/STM32WBxx/Include \
 -IDrivers/CMSIS/Include \
+-IDrivers/NT3H2111 \
 -IDrivers/STM32WBxx_HAL_Driver/Inc \
 -IDrivers/STM32WBxx_HAL_Driver/Inc/Legacy \
 -IDrivers/Speaker \
+-IDrivers/TMP116 \
 -IDrivers/TPS25730 \
 -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc \
 -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \

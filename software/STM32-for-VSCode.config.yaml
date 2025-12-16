@@ -82,6 +82,8 @@ includeDirectories:
   - Core/Lib/**
   - Drivers/TPS25730/**
   - Drivers/Speaker/**
+  - Drivers/TMP116/**
+  - Drivers/NT3H2111/**
 
 
 # Files that should be included in the compilation.
@@ -95,6 +97,8 @@ sourceFiles:
   - Core/Lib/**
   - Drivers/TPS25730/**
   - Drivers/Speaker/**
+  - Drivers/TMP116/**
+  - Drivers/NT3H2111/**
 
 
 # When no makefile is present it will show a warning pop-up.
