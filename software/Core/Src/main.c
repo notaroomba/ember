@@ -25,6 +25,8 @@
 
 #include "usbd_cdc_if.h"
 #include <stdarg.h>
+#include "tps25730_driver.h"
+#include "speaker.h"
 
 /* USER CODE END Includes */
 
@@ -58,7 +60,10 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-
+TPS25730_Handle *tps_handle = NULL;
+Speaker_Handle *speaker = NULL;
+ int32_t CH1_DC = 0;
+ bool toggle = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,6 +96,7 @@ void print(const char* format, ...) {
     if (len > 0 && len < (int)sizeof(buffer)) {
         CDC_Transmit_FS((uint8_t *)buffer, len);
     }
+    HAL_Delay(10); // Small delay to ensure transmission
 }
 /* USER CODE END 0 */
 
@@ -137,7 +143,84 @@ int main(void)
   MX_USB_Device_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
-    print("Hello, World!\r\n");
+  HAL_Delay(1000);
+  print("Ember V1!\r\n");
+  
+  // Initialize TPS25730 on I2C1 (assuming address 0x20)
+  tps_handle = TPS25730_Init(&hi2c1, 0x20);
+  if (tps_handle == NULL) {
+    print("TPS25730: Init FAILED\r\n");
+  }
+  
+  HAL_Delay(2000);
+  
+  if (tps_handle != NULL) {
+    uint32_t voltage_mv, current_ma;
+    
+    /*
+    // === List all available PDOs from charger ===
+    TPS25730_SourceCaps source_caps;
+    if (TPS25730_ReadRxSourceCaps(tps_handle, &source_caps)) {
+      print("=== Source PDOs ===\r\n");
+      for (uint8_t i = 0; i < source_caps.num_valid_pdos; i++) {
+        uint32_t pdo = source_caps.pdos[i];
+        TPS25730_FixedPDO fixed;
+        if (TPS25730_ParseFixedPDO(pdo, &fixed)) {
+          print("PDO %u: %lu.%02luV @ %lu.%02luA\r\n", i+1, 
+                fixed.voltage_mv/1000, (fixed.voltage_mv%1000)/10,
+                fixed.operational_current_ma/1000, (fixed.operational_current_ma%1000)/10);
+        }
+      }
+    }
+    */
+    
+    // Get current voltage
+    if (TPS25730_GetActiveVoltage(tps_handle, &voltage_mv, &current_ma)) {
+      print("Current: %lu.%02luV @ %lu.%02luA\r\n", 
+            voltage_mv/1000, (voltage_mv%1000)/10,
+            current_ma/1000, (current_ma%1000)/10);
+    }
+    
+    // Request 20V @ 5A
+    print("Requesting 20V @ 5A...\r\n");
+    if (TPS25730_RequestVoltage(tps_handle, 20000, 5000, 5000)) {
+      HAL_Delay(1000);
+      
+      // Get updated voltage
+      if (TPS25730_GetActiveVoltage(tps_handle, &voltage_mv, &current_ma)) {
+        print("Updated: %lu.%02luV @ %lu.%02luA\r\n", 
+              voltage_mv/1000, (voltage_mv%1000)/10,
+              current_ma/1000, (current_ma%1000)/10);
+      }
+    } else {
+      print("Request failed\r\n");
+    }
+  }
+
+  // Initialize speaker and play jingle bells
+  speaker = Speaker_Init(&htim1, TIM_CHANNEL_1, 64000000);
+  
+  // Jingle Bells melody
+  const Speaker_Note jingle_bells[] = {
+    // "Jingle bells, jingle bells"
+    {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 400},
+    {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 400},
+    // "Jingle all the way"
+    {NOTE_E5, 200}, {NOTE_G5, 200}, {NOTE_C5, 200}, {NOTE_D5, 200}, {NOTE_E5, 600},
+    {NOTE_REST, 200},
+    // "Oh what fun it is to ride"
+    {NOTE_F5, 200}, {NOTE_F5, 200}, {NOTE_F5, 200}, {NOTE_F5, 200},
+    {NOTE_F5, 200}, {NOTE_E5, 200}, {NOTE_E5, 200}, {NOTE_E5, 100}, {NOTE_E5, 100},
+    // "In a one horse open sleigh"
+    {NOTE_E5, 200}, {NOTE_D5, 200}, {NOTE_D5, 200}, {NOTE_E5, 200}, {NOTE_D5, 400}, {NOTE_G5, 400},
+  };
+  
+  Speaker_PlayMelody(speaker, jingle_bells, sizeof(jingle_bells)/sizeof(jingle_bells[0]));
+  
+  // Wait for melody to finish
+  while (Speaker_Update(speaker)) {
+    // Melody still playing
+  }
 
   /* USER CODE END 2 */
 
@@ -145,6 +228,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // Main loop - add your code here
 
     /* USER CODE END WHILE */
 
@@ -519,6 +603,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
@@ -532,7 +617,16 @@ static void MX_TIM1_Init(void)
   htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
   {
     Error_Handler();
@@ -591,6 +685,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
@@ -603,6 +698,15 @@ static void MX_TIM2_Init(void)
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -648,7 +752,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LED_BLUE_Pin|LED_GREEN_Pin|FAULT_IN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LED_BLUE_Pin|LED_GREEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
@@ -665,11 +769,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BUTTON_Pin SINK_EN_Pin */
-  GPIO_InitStruct.Pin = BUTTON_Pin|SINK_EN_Pin;
+  /*Configure GPIO pin : BUTTON_Pin */
+  GPIO_InitStruct.Pin = BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TEMP_ALERT_Pin */
   GPIO_InitStruct.Pin = TEMP_ALERT_Pin;
@@ -677,8 +781,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(TEMP_ALERT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LED_BLUE_Pin LED_GREEN_Pin FAULT_IN_Pin */
-  GPIO_InitStruct.Pin = LED_BLUE_Pin|LED_GREEN_Pin|FAULT_IN_Pin;
+  /*Configure GPIO pins : LED_BLUE_Pin LED_GREEN_Pin */
+  GPIO_InitStruct.Pin = LED_BLUE_Pin|LED_GREEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -691,11 +795,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_RED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : CAP_MIS_Pin */
-  GPIO_InitStruct.Pin = CAP_MIS_Pin;
+  /*Configure GPIO pin : FAULT_IN_Pin */
+  GPIO_InitStruct.Pin = FAULT_IN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(CAP_MIS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(FAULT_IN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SINK_EN_Pin */
+  GPIO_InitStruct.Pin = SINK_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SINK_EN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED_COOLING_Pin LED_REFLOW_Pin LED_SOAK_Pin */
   GPIO_InitStruct.Pin = LED_COOLING_Pin|LED_REFLOW_Pin|LED_SOAK_Pin;

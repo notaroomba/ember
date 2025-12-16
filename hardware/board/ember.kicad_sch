@@ -9624,6 +9624,26 @@
 		)
 		(uuid "22e92867-5df5-4670-acac-203d92cf27bc")
 	)
+	(text "Value: 7"
+		(exclude_from_sim no)
+		(at 48.768 226.06 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "31611065-66a5-4351-a57c-de61f535f6ad")
+	)
+	(text "Value: 1"
+		(exclude_from_sim no)
+		(at 90.678 225.552 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "3317537a-8529-44d7-805b-bf3444332e6d")
+	)
 	(text "BOARD TEMP SENSOR"
 		(exclude_from_sim no)
 		(at 158.75 206.756 0)
@@ -9708,6 +9728,26 @@
 		)
 		(uuid "d52491de-2c6c-4b49-b8e4-8157f779b8c6")
 	)
+	(text "Value: 0"
+		(exclude_from_sim no)
+		(at 24.892 225.806 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "e3046ef5-3394-406e-80d3-20220074e887")
+	)
+	(text "I2C ADDRESS: 0x20"
+		(exclude_from_sim no)
+		(at 99.568 129.032 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "ed32f797-9146-454a-aafe-e1136c605398")
+	)
 	(text "STM32"
 		(exclude_from_sim no)
 		(at 192.786 24.13 0)
@@ -9719,6 +9759,16 @@
 			)
 		)
 		(uuid "f4428a2a-b9d9-4ec1-b857-bb399eaee083")
+	)
+	(text "Value: 3"
+		(exclude_from_sim no)
+		(at 70.358 225.806 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "fe2f5ddd-18a1-4a61-b5e3-7f40f57a5db2")
 	)
 	(junction
 		(at 161.29 161.29)

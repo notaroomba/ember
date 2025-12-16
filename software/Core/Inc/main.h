@@ -99,8 +99,6 @@ void Error_Handler(void);
 #define FAULT_IN_GPIO_Port GPIOB
 #define SINK_EN_Pin GPIO_PIN_6
 #define SINK_EN_GPIO_Port GPIOC
-#define CAP_MIS_Pin GPIO_PIN_10
-#define CAP_MIS_GPIO_Port GPIOA
 #define LED_COOLING_Pin GPIO_PIN_10
 #define LED_COOLING_GPIO_Port GPIOC
 #define LED_REFLOW_Pin GPIO_PIN_11

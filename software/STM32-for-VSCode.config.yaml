@@ -80,6 +80,8 @@ includeDirectories:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
+  - Drivers/TPS25730/**
+  - Drivers/Speaker/**
 
 
 # Files that should be included in the compilation.
@@ -91,6 +93,8 @@ sourceFiles:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
+  - Drivers/TPS25730/**
+  - Drivers/Speaker/**
 
 
 # When no makefile is present it will show a warning pop-up.
