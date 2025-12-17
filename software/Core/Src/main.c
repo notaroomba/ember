@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
+#include "swallow2.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -259,6 +260,8 @@ int main(void)
   //   // Melody still playing
   // }
 
+
+
   // Initialize INA226 on I2C1 (bus voltage/current monitor)
   // 3W 2mΩ SMD ±50ppm/℃ Current Sense Resistor ±1% 2512
   // if (ina226_basic_init(INA226_ADDRESS_0, 0.002) == 0) {
@@ -284,6 +287,8 @@ int main(void)
   {
     // Poll inputs (non-blocking)
     Input_Poll();
+
+    
     
     // Handle encoder events
     if (input_encoder_cw) {
@@ -319,8 +324,12 @@ int main(void)
       print("Button short press! Position: %ld\r\n", input_encoder_position);
       if (speaker != NULL) {
         // Play current beep and print frequency
-        Speaker_Beep(speaker, (uint16_t)encoder_tone_current_freq, 40, 10, 1);
+        // Speaker_Beep(speaker, (uint16_t)encoder_tone_current_freq, 40, 10, 1);
         // print("Speaker current beep: %lu Hz\r\n", encoder_tone_current_freq);
+          Speaker_PlayMelody(speaker, swallow, sizeof(swallow)/sizeof(swallow[0]));
+        while(Speaker_Update(speaker)) {
+          
+        }
       }
       // TODO: Handle short press (e.g., select/confirm)
     }
