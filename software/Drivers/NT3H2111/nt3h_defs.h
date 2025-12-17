@@ -95,21 +95,21 @@ typedef void          (*nt3h_delay_ms_func_ptr_t)(uint32_t period_ms);
 // /*
 //  * @brief Structure representation of Capability Container values.
 //  */
-// typedef struct {
+typedef struct {
     
-//     /*  */
-//     uint8_t magic_number;
+    /*  */
+    uint8_t magic_number;
     
-//     /*  */
-//     uint8_t version;
+    /*  */
+    uint8_t version;
     
-//     /*  */
-//     uint8_t mlen;
+    /*  */
+    uint8_t mlen;
     
-//     /*  */
-//     uint8_t access_control;
+    /*  */
+    uint8_t access_control;
 
-// } capability_cont_t;
+} capability_cont_t;
 
 
 /*

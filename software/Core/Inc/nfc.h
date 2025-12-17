@@ -1,3 +1,4 @@
+
 /**
  ******************************************************************************
  * @file    nfc.h
@@ -107,6 +108,17 @@ bool NFC_HasContent(void);
  * @brief Refresh the internal memory hash (call after external writes)
  */
 void NFC_RefreshHash(void);
+
+/**
+ * @brief Perform a factory reset on the NT3H2111 NFC tag
+ * @return NFC_OK on success
+ */
+NFC_Status_t NFC_FactoryReset(void);
+
+/**
+ * @brief Disable password protection on the NT3H2111 NFC tag
+ */
+void NFC_DisablePasswordProtection(void);
 
 #ifdef __cplusplus
 }

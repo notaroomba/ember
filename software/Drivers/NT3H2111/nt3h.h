@@ -159,36 +159,26 @@ nt3h_status_t nt3h_read_config(nt3h_dev_t *dev, uint8_t reg, uint8_t *data);
 nt3h_status_t nt3h_write_config(nt3h_dev_t *dev, uint8_t reg, uint8_t mask, uint8_t data);
 
 /*!
- * @brief This API changes the I2C address of the NT3H device.
+ * @brief This API reads the Capability Container memory region of the device.
  *
- * @param[in]     dev : Pointer to device structure.
- * @param[in] i2c_addr : New I2C address (7-bit, unshifted).
+ * @param[in]   dev : Pointer to device structure.
+ * @param[in]    cc : Pointer to capability container to store values.
  * 
  * @return Result of API execution status.
  */
-nt3h_status_t nt3h_change_i2c_address(nt3h_dev_t *dev, uint8_t i2c_addr);
+nt3h_status_t nt3h_read_capability_cont(nt3h_dev_t *dev, capability_cont_t *cc);
 
-// /*!
-//  * @brief This API reads the Capability Container memory region of the device.
-//  *
-//  * @param[in]   dev : Pointer to device structure.
-//  * @param[in]    cc : Pointer to capability container to store values.
-//  * 
-//  * @return Result of API execution status.
-//  */
-// nt3h_status_t nt3h_read_capability_cont(nt3h_dev_t *dev, capability_cont_t *cc);
+/*!
+ * @brief This API writes the Capability Container memory region of the device.
+ *
+ * @param[in]   dev : Pointer to device structure.
+ * @param[in]    cc : Pointer to capability container containing values.
+ * 
+ * @return Result of API execution status.
+ */
+nt3h_status_t nt3h_write_capability_cont(nt3h_dev_t *dev, capability_cont_t *cc);
 
-// /*!
-//  * @brief This API writes the Capability Container memory region of the device.
-//  *
-//  * @param[in]   dev : Pointer to device structure.
-//  * @param[in]    cc : Pointer to capability container containing values.
-//  * 
-//  * @return Result of API execution status.
-//  */
-// nt3h_status_t nt3h_write_capability_cont(nt3h_dev_t *dev, capability_cont_t *cc);
-
-// nt3h_status_t nt3h_write_addr(nt3h_dev_t *dev, uint8_t addr); /* Write 'Addr' (I2C Address) field */
+nt3h_status_t nt3h_write_addr(nt3h_dev_t *dev, uint8_t addr); /* Write 'Addr' (I2C Address) field */
 
 /*!
  * @brief This API checks if there is currently an NFC field present on the NFC antenna.
@@ -211,6 +201,15 @@ nt3h_status_t nt3h_is_field_present(nt3h_dev_t *dev, bool *is_field_present);
  * @return Result of API execution status.
  */
 nt3h_status_t nt3h_check(nt3h_dev_t *dev);
+
+/*!
+    * @brief This API performs a factory reset of the NT3H device.
+    * 
+    * @param[in]   dev : Pointer to device structure.
+    * 
+    * @return Result of API execution status.
+*/
+nt3h_status_t nt3h_factory_reset(nt3h_dev_t *dev);
 
 
 

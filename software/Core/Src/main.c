@@ -75,6 +75,11 @@ TMP116_Handle_t tmp116;
 static uint32_t last_temp_read = 0;
 static uint32_t last_nfc_poll = 0;
 static uint32_t last_ina226_poll = 0;
+// Encoder tone settings (configurable)
+static uint32_t encoder_tone_base_freq = 2093; // C7
+static int16_t encoder_tone_steps = 0; // steps from base, CCW +1 => +50Hz
+static uint32_t encoder_tone_step_hz = 50; // Hz per step
+static uint32_t encoder_tone_current_freq = 2093; // Start at base freq
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -162,11 +167,17 @@ int main(void)
     print("TMP119: FAILED\r\n");
   }
   
+
   // Initialize NT3H2111 NFC tag on I2C3
   if (NFC_Init() == NFC_OK) {
-    // if (!NFC_HasContent()) {
-    //   NFC_WriteText("Ember V1");
+    // NFC_DisablePasswordProtection();
+    // Factory reset NFC tag after init using NFC wrapper
+    // if (NFC_FactoryReset() == NFC_OK) {
+    //   print("NFC: Factory reset complete\r\n");
+    // } else {
+    //   print("NFC: Factory reset FAILED\r\n");
     // }
+    // // NFC_WriteText("Ember V1 NFC Tag");
     NFC_RefreshHash();  // Sync hash with current memory state
   }
 
@@ -278,18 +289,39 @@ int main(void)
     if (input_encoder_cw) {
       input_encoder_cw = false;
       print("Encoder CW, position: %ld\r\n", input_encoder_position);
-      // TODO: Handle clockwise rotation
+      // Decrease pitch by 50 Hz per clockwise step
+      encoder_tone_steps--;
+      int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
+      if (freq < 20) freq = 20;
+      if (freq > 20000) freq = 20000;
+      encoder_tone_current_freq = (uint32_t)freq;
+      if (speaker != NULL) {
+        Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+      }
     }
     if (input_encoder_ccw) {
       input_encoder_ccw = false;
       print("Encoder CCW, position: %ld\r\n", input_encoder_position);
-      // TODO: Handle counter-clockwise rotation
+      // Increase pitch by 50 Hz per counter-clockwise step
+      encoder_tone_steps++;
+      int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
+      if (freq < 20) freq = 20;
+      if (freq > 20000) freq = 20000;
+      encoder_tone_current_freq = (uint32_t)freq;
+      if (speaker != NULL) {
+        Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+      }
     }
     
     // Handle button events
     if (input_button_pressed) {
       input_button_pressed = false;
       print("Button short press! Position: %ld\r\n", input_encoder_position);
+      if (speaker != NULL) {
+        // Play current beep and print frequency
+        Speaker_Beep(speaker, (uint16_t)encoder_tone_current_freq, 40, 10, 1);
+        // print("Speaker current beep: %lu Hz\r\n", encoder_tone_current_freq);
+      }
       // TODO: Handle short press (e.g., select/confirm)
     }
     if (input_button_long_pressed) {
@@ -315,12 +347,18 @@ int main(void)
         if (nfc_events.data_changed) {
           // Read first 16 bytes of user memory to see what changed
           uint8_t nfc_data[16];
+          char nfc_text[128];
           if (NFC_ReadMemory(0, nfc_data, sizeof(nfc_data)) == NFC_OK) {
-            print("NFC Data: %02X %02X %02X %02X %02X %02X %02X %02X\r\n",
-                  nfc_data[0], nfc_data[1], nfc_data[2], nfc_data[3],
-                  nfc_data[4], nfc_data[5], nfc_data[6], nfc_data[7]);
+            for (size_t i = 0; i < sizeof(nfc_data); i++) {
+              print("%02x ", nfc_data[i]);
+            }
+            print("\r\n");
           }
+        if (NFC_ReadText(nfc_text, sizeof(nfc_text)) == NFC_OK) {
+          print("NFC Text: %s\r\n", nfc_text);
         }
+        }
+
       }
     }
     
@@ -905,8 +943,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, LED_PREHEAT_Pin|LED_PD_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : CURRENT_ALERT_Pin PT_DRDY_Pin FIELD_DETECT_Pin */
-  GPIO_InitStruct.Pin = CURRENT_ALERT_Pin|PT_DRDY_Pin|FIELD_DETECT_Pin;
+  /*Configure GPIO pins : CURRENT_ALERT_Pin PT_DRDY_Pin */
+  GPIO_InitStruct.Pin = CURRENT_ALERT_Pin|PT_DRDY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -916,6 +954,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : FIELD_DETECT_Pin SINK_EN_Pin */
+  GPIO_InitStruct.Pin = FIELD_DETECT_Pin|SINK_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TEMP_ALERT_Pin */
   GPIO_InitStruct.Pin = TEMP_ALERT_Pin;
@@ -942,12 +986,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(FAULT_IN_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : SINK_EN_Pin */
-  GPIO_InitStruct.Pin = SINK_EN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SINK_EN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED_COOLING_Pin LED_REFLOW_Pin LED_SOAK_Pin */
   GPIO_InitStruct.Pin = LED_COOLING_Pin|LED_REFLOW_Pin|LED_SOAK_Pin;

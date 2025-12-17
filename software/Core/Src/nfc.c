@@ -21,6 +21,8 @@ static nt3h_dev_t nfc_dev;
 /* Previous state for change detection */
 static bool last_field_state = false;
 static uint8_t last_memory_hash = 0;
+static uint32_t nfc_field_lost_ts = 0;
+static bool nfc_pending_hash_check = false;
 
 /* User memory start block (after capability container) */
 #define NFC_USER_MEMORY_START   0x01
@@ -100,6 +102,37 @@ static uint8_t compute_memory_hash(void)
 }
 
 /**
+ * @brief Disable password protection on the NT3H2111 NFC tag
+ */
+void NFC_DisablePasswordProtection(void)
+{
+    uint8_t buf[16];
+
+    // ---------- Block 0x38 ----------
+    memset(buf, 0x00, sizeof(buf));
+
+    buf[0] = 0x00;   // ACCESS = 0x00 (no NFC protection)
+    buf[3] = 0xFF;   // AUTH0 = 0xFF (disable protection)
+    buf[4] = 0x00;   // PWD = 0x00000000
+    buf[5] = 0x00;
+    buf[6] = 0x00;
+    buf[7] = 0x00;
+    buf[8] = 0x00;   // PACK = 0x0000
+    buf[9] = 0x00;
+
+    NFC_WriteMemory((0x38 - NFC_USER_MEMORY_START) * 16, buf, 16);
+    HAL_Delay(10); // EEPROM write time
+
+    // ---------- Block 0x39 ----------
+    memset(buf, 0x00, sizeof(buf));
+
+    buf[0] = 0x00; // PT_I2C = 0b00 (full I2C access)
+
+    NFC_WriteMemory((0x39 - NFC_USER_MEMORY_START) * 16, buf, 16);
+    HAL_Delay(10);
+}
+
+/**
  * @brief Scan I2C3 for NFC device and return its address
  * @return Found address or 0 if not found
  */
@@ -149,16 +182,16 @@ NFC_Status_t NFC_Init(void)
     
     /* Change address to configured value if different */
     if (found_addr != NFC_I2C_ADDRESS) {
-        status = nt3h_change_i2c_address(&nfc_dev, NFC_I2C_ADDRESS);
-        if (status != NT3H_OK) {
-            print("NFC: Address change failed\r\n");
-            return NFC_ERROR;
-        }
+        // status = nt3h_change_i2c_address(&nfc_dev, NFC_I2C_ADDRESS);
+        // if (status != NT3H_OK) {
+        //     print("NFC: Address change failed\r\n");
+        //     return NFC_ERROR;
+        // }
         HAL_Delay(20);  /* Wait for EEPROM write */
-        nfc_dev.dev_id = NFC_I2C_ADDRESS;
+        nfc_dev.dev_id = found_addr;
         
         /* Verify new address responds */
-        if (HAL_I2C_IsDeviceReady(&hi2c3, NFC_I2C_ADDRESS << 1, 3, 100) != HAL_OK) {
+        if (HAL_I2C_IsDeviceReady(&hi2c3, found_addr << 1, 3, 100) != HAL_OK) {
             print("NFC: Address verify failed\r\n");
             return NFC_ERROR;
         }
@@ -216,36 +249,51 @@ NFC_Status_t NFC_Poll(NFC_Events_t *events)
         
         if (current_field) {
             print("NFC: Field detected\r\n");
+            /* Cancel any pending hash check when the field returns */
+            nfc_pending_hash_check = false;
+            nfc_field_lost_ts = 0;
         } else {
             print("NFC: Field lost\r\n");
-            
-            /* Wait for I2C bus to stabilize after RF field removed */
-            HAL_Delay(10);
-            
-            /* Check for memory changes when field is removed
-             * Read twice to ensure consistent data (RF interference protection)
-             */
+            /* Start a non-blocking timer; compute hash only after stable absence */
+            nfc_pending_hash_check = true;
+            nfc_field_lost_ts = HAL_GetTick();
+        }
+        }
+
+    /* If a hash check is pending and field remains absent for stable period,
+     * perform double-read verification and report data change if needed.
+     */
+    if (nfc_pending_hash_check && !NFC_IsFieldDetected()) {
+        const uint32_t stable_ms = 200;
+        if ((HAL_GetTick() - nfc_field_lost_ts) >= stable_ms) {
             uint8_t hash1 = compute_memory_hash();
             HAL_Delay(5);
             uint8_t hash2 = compute_memory_hash();
-            
-            /* Only report change if both reads match and differ from stored hash */
+
             if (hash1 == hash2 && hash1 != last_memory_hash) {
                 events->data_changed = true;
                 last_memory_hash = hash1;
                 print("NFC: Data changed\r\n");
             }
+
+            /* Clear pending flag after processing */
+            nfc_pending_hash_check = false;
+            nfc_field_lost_ts = 0;
         }
+    } else if (nfc_pending_hash_check && NFC_IsFieldDetected()) {
+        /* Field returned before stability period elapsed; cancel check */
+        nfc_pending_hash_check = false;
+        nfc_field_lost_ts = 0;
     }
+    
     
     return NFC_OK;
 }
 
 bool NFC_IsFieldDetected(void)
 {
-    /* FIELD_DETECT pin is configured as interrupt rising edge */
-    /* Read the current state - active high when field present */
-    return (HAL_GPIO_ReadPin(FIELD_DETECT_GPIO_Port, FIELD_DETECT_Pin) == GPIO_PIN_SET);
+    /* Read the current state - active low when field present */
+    return (HAL_GPIO_ReadPin(FIELD_DETECT_GPIO_Port, FIELD_DETECT_Pin) == GPIO_PIN_RESET);
 }
 
 NFC_Status_t NFC_ReadMemory(uint16_t offset, uint8_t *data, size_t len)
@@ -382,4 +430,10 @@ NFC_Status_t NFC_ReadText(char *buffer, size_t max_len)
     buffer[copy_len] = '\0';
     
     return NFC_OK;
+}
+
+NFC_Status_t NFC_FactoryReset(void)
+{
+    nt3h_status_t status = nt3h_factory_reset(&nfc_dev);
+    return (status == NT3H_OK) ? NFC_OK : NFC_ERROR;
 }
