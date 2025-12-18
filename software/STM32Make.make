@@ -142,7 +142,6 @@ Middlewares/ST/STM32_WPAN/ble/core/auto/ble_hal_aci.c \
 Middlewares/ST/STM32_WPAN/ble/core/auto/ble_hci_le.c \
 Middlewares/ST/STM32_WPAN/ble/core/auto/ble_l2cap_aci.c \
 Middlewares/ST/STM32_WPAN/ble/core/template/osal.c \
-Middlewares/ST/STM32_WPAN/ble/svc/Src/p2p_stm.c \
 Middlewares/ST/STM32_WPAN/ble/svc/Src/svc_ctl.c \
 Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci/shci.c \
 Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/hci_tl.c \
@@ -157,7 +156,6 @@ Middlewares/ST/STM32_WPAN/utilities/stm_queue.c \
 STM32_WPAN/App/app_ble.c \
 STM32_WPAN/App/custom_app.c \
 STM32_WPAN/App/custom_stm.c \
-STM32_WPAN/App/p2p_server_app.c \
 STM32_WPAN/Target/hw_ipcc.c \
 USB_Device/App/usb_device.c \
 USB_Device/App/usbd_cdc_if.c \

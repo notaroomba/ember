@@ -308,6 +308,7 @@ int main(void)
 
     LEDs_Off();
     Set_LED_Status(LED_STATUS_GOOD, ON);
+    Set_LED_Status(LED_STATUS_PD, BLINKING);
     
 
   /* USER CODE END 2 */
@@ -324,10 +325,7 @@ int main(void)
     Update_LEDs();
     Speaker_Update(speaker);
 
-    Set_LED_Status(LED_STATUS_PD, ON); // Indicate main loop is running
-    HAL_Delay(500);
-        Set_LED_Status(LED_STATUS_PD, OFF); // Indicate main loop is running
-    HAL_Delay(500);
+ 
 
     
     
@@ -797,6 +795,13 @@ static void MX_RTC_Init(void)
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
   hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
   if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Enable the WakeUp
+  */
+  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 0, RTC_WAKEUPCLOCK_RTCCLK_DIV16) != HAL_OK)
   {
     Error_Handler();
   }

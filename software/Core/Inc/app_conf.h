@@ -63,10 +63,13 @@
 #define CFG_FAST_CONN_ADV_INTERVAL_MAX    (0x00A0)      /**< 100ms */
 #define CFG_LP_CONN_ADV_INTERVAL_MIN      (0x640)     /**< 1s */
 #define CFG_LP_CONN_ADV_INTERVAL_MAX      (0xFA0)     /**< 2.5s */
+#define ADV_TYPE                          ADV_IND
+#define BLE_ADDR_TYPE                     GAP_PUBLIC_ADDR
+#define ADV_FILTER                        NO_WHITE_LIST_USE
 /**
  * Define IO Authentication
  */
-#define CFG_BONDING_MODE                 (1)
+#define CFG_BONDING_MODE                 (0)
 #define CFG_ENCRYPTION_KEY_SIZE_MAX      (16)
 #define CFG_ENCRYPTION_KEY_SIZE_MIN      (8)
 
@@ -115,8 +118,8 @@
 /**
  * Device name configuration for Generic Access Service
  */
-#define CFG_GAP_DEVICE_NAME             "EMBER"
-#define CFG_GAP_DEVICE_NAME_LENGTH      (5)
+#define CFG_GAP_DEVICE_NAME             "EMBER_STM32"
+#define CFG_GAP_DEVICE_NAME_LENGTH      (11)
 
 /**
  * Define PHY
@@ -147,29 +150,14 @@
 #define CFG_USE_SMPS    0
 
 /* USER CODE BEGIN Generic_Parameters */
-#define ADV_TYPE   HCI_ADV_TYPE_ADV_IND
+// #define ADV_TYPE   HCI_ADV_TYPE_ADV_IND
 
-/* Advertising filter policy: no whitelist (allow all) */
-#define ADV_FILTER HCI_ADV_FILTER_NO
+// /* Advertising filter policy: no whitelist (allow all) */
+// #define ADV_FILTER HCI_ADV_FILTER_NO
 /* USER CODE END Generic_Parameters */
 
 /**< specific parameters */
 /*****************************************************/
-
-#define P2P_SERVER1    1    /*1 = Device is Peripherique*/
-#define P2P_SERVER2    0
-#define P2P_SERVER3    0
-#define P2P_SERVER4    0
-#define P2P_SERVER5    0
-#define P2P_SERVER6    0
-
-#define CFG_DEV_ID_P2P_SERVER1                  (0x83)
-#define CFG_DEV_ID_P2P_SERVER2                  (0x84)
-#define CFG_DEV_ID_P2P_SERVER3                  (0x87)
-#define CFG_DEV_ID_P2P_SERVER4                  (0x88)
-#define CFG_DEV_ID_P2P_SERVER5                  (0x89)
-#define CFG_DEV_ID_P2P_SERVER6                  (0x8A)
-#define CFG_DEV_ID_P2P_ROUTER                   (0x85)
 
 #define  RADIO_ACTIVITY_EVENT   1          /* 1 for OOB Demo */
 
