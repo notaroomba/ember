@@ -9,6 +9,10 @@
 #ifndef RTD_H
 #define RTD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -18,5 +22,9 @@ float RTD_ReadOhms(void);
 bool RTD_Fault(void);
 uint8_t RTD_FaultCode(void);
 void RTD_ClearFault(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // RTD_H

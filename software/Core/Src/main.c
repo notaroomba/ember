@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
-#include "swallow2.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -37,6 +36,8 @@
 #include "rtd.h"
 
 #include "thermocouple.h"
+
+#include "swallow2.h"
 
 /* USER CODE END Includes */
 
@@ -59,9 +60,13 @@
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c3;
 
+IPCC_HandleTypeDef hipcc;
+
 LPTIM_HandleTypeDef hlptim1;
 
 QSPI_HandleTypeDef hqspi;
+
+RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
@@ -95,6 +100,8 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_LPTIM1_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_IPCC_Init(void);
+static void MX_RTC_Init(void);
 static void MX_RF_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -120,6 +127,8 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+  /* Config code for STM32_WPAN (HSE Tuning must be done before system clock configuration) */
+  MX_APPE_Config();
 
   /* USER CODE BEGIN Init */
 
@@ -130,6 +139,9 @@ int main(void)
 
   /* Configure the peripherals common clocks */
   PeriphCommonClock_Config();
+
+  /* IPCC initialisation */
+  MX_IPCC_Init();
 
   /* USER CODE BEGIN SysInit */
 
@@ -146,10 +158,25 @@ int main(void)
   MX_LPTIM1_Init();
   MX_SPI1_Init();
   MX_USB_Device_Init();
+  MX_RTC_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
   
   HAL_Delay(1000);
+
+  /* Register LED pins with utils so Update_LEDs can control them */
+  LEDs_RegisterPin(LED_STATUS_PD,       LED_PD_GPIO_Port,       LED_PD_Pin);
+  LEDs_RegisterPin(LED_STATUS_PREHEAT,  LED_PREHEAT_GPIO_Port,  LED_PREHEAT_Pin);
+  LEDs_RegisterPin(LED_STATUS_SOAK,     LED_SOAK_GPIO_Port,     LED_SOAK_Pin);
+  LEDs_RegisterPin(LED_STATUS_REFLOW,   LED_REFLOW_GPIO_Port,   LED_REFLOW_Pin);
+  LEDs_RegisterPin(LED_STATUS_COOL,     LED_COOLING_GPIO_Port,  LED_COOLING_Pin);
+  LEDs_RegisterPin(LED_STATUS_STATUS,   LED_BLUE_GPIO_Port,    LED_BLUE_Pin);
+  LEDs_RegisterPin(LED_STATUS_GOOD,     LED_GREEN_GPIO_Port,     LED_GREEN_Pin);
+  LEDs_RegisterPin(LED_STATUS_ERROR,    LED_RED_GPIO_Port,      LED_RED_Pin);
+
+  /* Set blink interval (ms) and start blinking all LEDs for visual test */
+  LEDs_SetBlinkInterval(500);
+  LEDs_Blinking();
   
   // Initialize input handling (encoder + button)
   if (!Input_Init()) {
@@ -279,7 +306,14 @@ int main(void)
   Thermocouple_Init();
   print("Thermocouple: MAX6675 initialized\r\n");
 
+    LEDs_Off();
+    Set_LED_Status(LED_STATUS_GOOD, ON);
+    
+
   /* USER CODE END 2 */
+
+  /* Init code for STM32_WPAN */
+  MX_APPE_Init();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -287,6 +321,13 @@ int main(void)
   {
     // Poll inputs (non-blocking)
     Input_Poll();
+    Update_LEDs();
+    Speaker_Update(speaker);
+
+    Set_LED_Status(LED_STATUS_PD, ON); // Indicate main loop is running
+    HAL_Delay(500);
+        Set_LED_Status(LED_STATUS_PD, OFF); // Indicate main loop is running
+    HAL_Delay(500);
 
     
     
@@ -338,7 +379,6 @@ int main(void)
       print("Button long press!\r\n");
       // TODO: Handle long press (e.g., back/cancel)
     }
-    
     // Poll temperature sensor periodically
     // if ((HAL_GetTick() - last_temp_read) >= TEMP_READ_INTERVAL_MS) {
     //   last_temp_read = HAL_GetTick();
@@ -353,7 +393,12 @@ int main(void)
       last_nfc_poll = HAL_GetTick();
       NFC_Events_t nfc_events;
       if (NFC_Poll(&nfc_events) == NFC_OK) {
+        Set_LED_Status(LED_STATUS_STATUS, nfc_events.field_detected ? ON : OFF);
+        //play a jingle  c4 and then f4 in sequence
+        
         if (nfc_events.data_changed) {
+                        Speaker_PlayMelody(speaker, (Speaker_Note[]){ {NOTE_F4, 75}, {NOTE_C4, 50} }, 2);
+
           // Read first 16 bytes of user memory to see what changed
           uint8_t nfc_data[16];
           char nfc_text[128];
@@ -366,7 +411,10 @@ int main(void)
         if (NFC_ReadText(nfc_text, sizeof(nfc_text)) == NFC_OK) {
           print("NFC Text: %s\r\n", nfc_text);
         }
-        }
+        } else if  (nfc_events.field_detected) {
+              // Field detected - play C4
+              Speaker_PlayMelody(speaker, (Speaker_Note[]){ {NOTE_C4, 75}, {NOTE_F4, 50} }, 2);
+            }
 
       }
     }
@@ -413,6 +461,7 @@ int main(void)
     // Other main loop tasks here...
     
     /* USER CODE END WHILE */
+    MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
   }
@@ -440,8 +489,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE
-                              |RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI1
+                              |RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE
+                              |RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -449,6 +499,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
@@ -604,6 +655,32 @@ static void MX_I2C3_Init(void)
 }
 
 /**
+  * @brief IPCC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IPCC_Init(void)
+{
+
+  /* USER CODE BEGIN IPCC_Init 0 */
+
+  /* USER CODE END IPCC_Init 0 */
+
+  /* USER CODE BEGIN IPCC_Init 1 */
+
+  /* USER CODE END IPCC_Init 1 */
+  hipcc.Instance = IPCC;
+  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IPCC_Init 2 */
+
+  /* USER CODE END IPCC_Init 2 */
+
+}
+
+/**
   * @brief LPTIM1 Initialization Function
   * @param None
   * @retval None
@@ -690,6 +767,42 @@ static void MX_RF_Init(void)
   /* USER CODE BEGIN RF_Init 2 */
 
   /* USER CODE END RF_Init 2 */
+
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+  hrtc.Init.AsynchPrediv = CFG_RTC_ASYNCH_PRESCALER;
+  hrtc.Init.SynchPrediv = CFG_RTC_SYNCH_PRESCALER;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
 
 }
 

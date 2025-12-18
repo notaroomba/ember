@@ -75,11 +75,15 @@ endif
 ######################################
 # C sources
 C_SOURCES =  \
+Core/Src/app_debug.c \
+Core/Src/app_entry.c \
 Core/Src/heater.c \
+Core/Src/hw_timerserver.c \
 Core/Src/input.c \
 Core/Src/main.c \
 Core/Src/nfc.c \
 Core/Src/rtd.c \
+Core/Src/stm32_lpm_if.c \
 Core/Src/stm32wbxx_hal_msp.c \
 Core/Src/stm32wbxx_it.c \
 Core/Src/syscalls.c \
@@ -106,6 +110,7 @@ Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_gpio.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_hsem.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_i2c.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_i2c_ex.c \
+Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_ipcc.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_lptim.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_pcd.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_pcd_ex.c \
@@ -114,6 +119,8 @@ Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_pwr_ex.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_qspi.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_rcc.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_rcc_ex.c \
+Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_rtc.c \
+Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_rtc_ex.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_spi.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_spi_ex.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_tim.c \
@@ -127,10 +134,37 @@ Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
+Middlewares/ST/STM32_WPAN/ble/core/auto/ble_events.c \
+Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gap_aci.c \
+Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gatt_aci.c \
+Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gen_aci.c \
+Middlewares/ST/STM32_WPAN/ble/core/auto/ble_hal_aci.c \
+Middlewares/ST/STM32_WPAN/ble/core/auto/ble_hci_le.c \
+Middlewares/ST/STM32_WPAN/ble/core/auto/ble_l2cap_aci.c \
+Middlewares/ST/STM32_WPAN/ble/core/template/osal.c \
+Middlewares/ST/STM32_WPAN/ble/svc/Src/p2p_stm.c \
+Middlewares/ST/STM32_WPAN/ble/svc/Src/svc_ctl.c \
+Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci/shci.c \
+Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/hci_tl.c \
+Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/hci_tl_if.c \
+Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/shci_tl.c \
+Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/shci_tl_if.c \
+Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/tl_mbox.c \
+Middlewares/ST/STM32_WPAN/utilities/dbg_trace.c \
+Middlewares/ST/STM32_WPAN/utilities/otp.c \
+Middlewares/ST/STM32_WPAN/utilities/stm_list.c \
+Middlewares/ST/STM32_WPAN/utilities/stm_queue.c \
+STM32_WPAN/App/app_ble.c \
+STM32_WPAN/App/custom_app.c \
+STM32_WPAN/App/custom_stm.c \
+STM32_WPAN/App/p2p_server_app.c \
+STM32_WPAN/Target/hw_ipcc.c \
 USB_Device/App/usb_device.c \
 USB_Device/App/usbd_cdc_if.c \
 USB_Device/App/usbd_desc.c \
-USB_Device/Target/usbd_conf.c
+USB_Device/Target/usbd_conf.c \
+Utilities/lpm/tiny_lpm/stm32_lpm.c \
+Utilities/sequencer/stm32_seq.c
 
 
 CXX_SOURCES = \
@@ -237,8 +271,22 @@ C_INCLUDES =  \
 -IDrivers/TPS25730 \
 -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc \
 -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
+-IMiddlewares/ST/STM32_WPAN \
+-IMiddlewares/ST/STM32_WPAN/ble \
+-IMiddlewares/ST/STM32_WPAN/ble/core \
+-IMiddlewares/ST/STM32_WPAN/ble/core/auto \
+-IMiddlewares/ST/STM32_WPAN/ble/core/template \
+-IMiddlewares/ST/STM32_WPAN/ble/svc/Inc \
+-IMiddlewares/ST/STM32_WPAN/ble/svc/Src \
+-IMiddlewares/ST/STM32_WPAN/interface/patterns/ble_thread \
+-IMiddlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci \
+-IMiddlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl \
+-IMiddlewares/ST/STM32_WPAN/utilities \
+-ISTM32_WPAN/App \
 -IUSB_Device/App \
--IUSB_Device/Target
+-IUSB_Device/Target \
+-IUtilities/lpm/tiny_lpm \
+-IUtilities/sequencer
 
 
 

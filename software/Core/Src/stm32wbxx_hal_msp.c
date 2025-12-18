@@ -69,9 +69,15 @@ void HAL_MspInit(void)
 
   /* USER CODE END MspInit 0 */
 
+  __HAL_RCC_HSEM_CLK_ENABLE();
   HAL_PWREx_EnableVddUSB();
 
   /* System interrupt init*/
+
+  /* Peripheral interrupt init */
+  /* HSEM_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(HSEM_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(HSEM_IRQn);
 
   /* USER CODE BEGIN MspInit 1 */
 
@@ -204,6 +210,51 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
     /* USER CODE BEGIN I2C3_MspDeInit 1 */
 
     /* USER CODE END I2C3_MspDeInit 1 */
+  }
+
+}
+
+/**
+  * @brief IPCC MSP Initialization
+  * This function configures the hardware resources used in this example
+  * @param hipcc: IPCC handle pointer
+  * @retval None
+  */
+void HAL_IPCC_MspInit(IPCC_HandleTypeDef* hipcc)
+{
+  if(hipcc->Instance==IPCC)
+  {
+    /* USER CODE BEGIN IPCC_MspInit 0 */
+
+    /* USER CODE END IPCC_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_IPCC_CLK_ENABLE();
+    /* USER CODE BEGIN IPCC_MspInit 1 */
+
+    /* USER CODE END IPCC_MspInit 1 */
+
+  }
+
+}
+
+/**
+  * @brief IPCC MSP De-Initialization
+  * This function freeze the hardware resources used in this example
+  * @param hipcc: IPCC handle pointer
+  * @retval None
+  */
+void HAL_IPCC_MspDeInit(IPCC_HandleTypeDef* hipcc)
+{
+  if(hipcc->Instance==IPCC)
+  {
+    /* USER CODE BEGIN IPCC_MspDeInit 0 */
+
+    /* USER CODE END IPCC_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_IPCC_CLK_DISABLE();
+    /* USER CODE BEGIN IPCC_MspDeInit 1 */
+
+    /* USER CODE END IPCC_MspDeInit 1 */
   }
 
 }
@@ -365,6 +416,68 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* hqspi)
     /* USER CODE BEGIN QUADSPI_MspDeInit 1 */
 
     /* USER CODE END QUADSPI_MspDeInit 1 */
+  }
+
+}
+
+/**
+  * @brief RTC MSP Initialization
+  * This function configures the hardware resources used in this example
+  * @param hrtc: RTC handle pointer
+  * @retval None
+  */
+void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  if(hrtc->Instance==RTC)
+  {
+    /* USER CODE BEGIN RTC_MspInit 0 */
+
+    /* USER CODE END RTC_MspInit 0 */
+
+  /** Enable access to the backup domain
+  */
+    HAL_PWR_EnableBkUpAccess();
+
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+    PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* Peripheral clock enable */
+    __HAL_RCC_RTC_ENABLE();
+    __HAL_RCC_RTCAPB_CLK_ENABLE();
+    /* USER CODE BEGIN RTC_MspInit 1 */
+
+    /* USER CODE END RTC_MspInit 1 */
+
+  }
+
+}
+
+/**
+  * @brief RTC MSP De-Initialization
+  * This function freeze the hardware resources used in this example
+  * @param hrtc: RTC handle pointer
+  * @retval None
+  */
+void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc)
+{
+  if(hrtc->Instance==RTC)
+  {
+    /* USER CODE BEGIN RTC_MspDeInit 0 */
+
+    /* USER CODE END RTC_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_RTC_DISABLE();
+    __HAL_RCC_RTCAPB_CLK_DISABLE();
+    /* USER CODE BEGIN RTC_MspDeInit 1 */
+
+    /* USER CODE END RTC_MspDeInit 1 */
   }
 
 }
