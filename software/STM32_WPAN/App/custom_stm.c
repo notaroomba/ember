@@ -29,7 +29,7 @@
 /* Private typedef -----------------------------------------------------------*/
 typedef struct{
   uint16_t  CustomStatHdle;                    /**< EMBER_STATUS handle */
-  uint16_t  CustomGoodHdle;                  /**< IS_GOOD handle */
+  uint16_t  CustomLedHdle;                  /**< LED_STATUS handle */
 /* USER CODE BEGIN Context */
   /* Place holder for Characteristic Descriptors Handle*/
 
@@ -64,7 +64,7 @@ extern uint16_t Connection_Handle;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-uint16_t SizeGood = 2;
+uint16_t SizeLed = 2;
 
 /**
  * START of Section BLE_DRIVER_CONTEXT
@@ -103,8 +103,8 @@ do {\
     uuid_struct[12] = uuid_12; uuid_struct[13] = uuid_13; uuid_struct[14] = uuid_14; uuid_struct[15] = uuid_15; \
 }while(0)
 
-#define COPY_EMBER_STATUS_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0xfe,0x40,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
-#define COPY_IS_GOOD_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0xfe,0x41,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_EMBER_STATUS_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
+#define COPY_LED_STATUS_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x01,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 
 /* USER CODE BEGIN PF */
 
@@ -141,13 +141,13 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
 
           /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_BEGIN */
           attribute_modified = (aci_gatt_attribute_modified_event_rp0*)blecore_evt->data;
-          if (attribute_modified->Attr_Handle == (CustomContext.CustomGoodHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+          if (attribute_modified->Attr_Handle == (CustomContext.CustomLedHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
 
             /* USER CODE END CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomGoodHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
+          } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomLedHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
 
           /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
@@ -246,13 +246,14 @@ void SVCCTL_InitCustomSvc(void)
    *
    * Max_Attribute_Records = 1 + 2*1 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
    * service_max_attribute_record = 1 for EMBER_STATUS +
-   *                                2 for IS_GOOD +
-   *                              = 3
+   *                                2 for LED_STATUS +
+   *                                1 for LED_STATUS broadcast property +
+   *                              = 4
    *
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 3;
+  max_attr_record = 4;
 
   /* USER CODE BEGIN SVCCTL_InitService1 */
   /* max_attr_record to be updated if descriptors have been added */
@@ -275,25 +276,25 @@ void SVCCTL_InitCustomSvc(void)
   }
 
   /**
-   *  IS_GOOD
+   *  LED_STATUS
    */
-  COPY_IS_GOOD_UUID(uuid.Char_UUID_128);
+  COPY_LED_STATUS_UUID(uuid.Char_UUID_128);
   ret = aci_gatt_add_char(CustomContext.CustomStatHdle,
                           UUID_TYPE_128, &uuid,
-                          SizeGood,
-                          CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP,
+                          SizeLed,
+                          CHAR_PROP_BROADCAST | CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RESP,
                           ATTR_PERMISSION_NONE,
                           GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
                           CHAR_VALUE_LEN_VARIABLE,
-                          &(CustomContext.CustomGoodHdle));
+                          &(CustomContext.CustomLedHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : GOOD, error code: 0x%x \n\r", ret);
+    APP_DBG_MSG("  Fail   : aci_gatt_add_char command   : LED, error code: 0x%x \n\r", ret);
   }
   else
   {
-    APP_DBG_MSG("  Success: aci_gatt_add_char command   : GOOD , handle = 0x%04x \n\r", CustomContext.CustomGoodHdle);
+    APP_DBG_MSG("  Success: aci_gatt_add_char command   : LED , handle = 0x%04x \n\r", CustomContext.CustomLedHdle);
   }
 
   /* USER CODE BEGIN SVCCTL_Init_Service1_Char1 */
@@ -324,19 +325,19 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
   switch (CharOpcode)
   {
 
-    case CUSTOM_STM_GOOD:
+    case CUSTOM_STM_LED:
       ret = aci_gatt_update_char_value(CustomContext.CustomStatHdle,
-                                       CustomContext.CustomGoodHdle,
+                                       CustomContext.CustomLedHdle,
                                        0, /* charValOffset */
-                                       SizeGood, /* charValueLen */
+                                       SizeLed, /* charValueLen */
                                        (uint8_t *)  pPayload);
       if (ret != BLE_STATUS_SUCCESS)
       {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value GOOD command, result : 0x%x \n\r", ret);
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value LED command, result : 0x%x \n\r", ret);
       }
       else
       {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value GOOD command\n\r");
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value LED command\n\r");
       }
       /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_1*/
 
@@ -371,19 +372,19 @@ tBleStatus Custom_STM_App_Update_Char_Variable_Length(Custom_STM_Char_Opcode_t C
   switch (CharOpcode)
   {
 
-    case CUSTOM_STM_GOOD:
+    case CUSTOM_STM_LED:
       ret = aci_gatt_update_char_value(CustomContext.CustomStatHdle,
-                                       CustomContext.CustomGoodHdle,
+                                       CustomContext.CustomLedHdle,
                                        0, /* charValOffset */
                                        size, /* charValueLen */
                                        (uint8_t *)  pPayload);
       if (ret != BLE_STATUS_SUCCESS)
       {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value GOOD command, result : 0x%x \n\r", ret);
+        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value LED command, result : 0x%x \n\r", ret);
       }
       else
       {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value GOOD command\n\r");
+        APP_DBG_MSG("  Success: aci_gatt_update_char_value LED command\n\r");
       }
       /* USER CODE BEGIN Custom_STM_App_Update_Char_Variable_Length_Service_1_Char_1*/
 
@@ -418,11 +419,11 @@ tBleStatus Custom_STM_App_Update_Char_Ext(uint16_t Connection_Handle, Custom_STM
   switch (CharOpcode)
   {
 
-    case CUSTOM_STM_GOOD:
+    case CUSTOM_STM_LED:
       /* USER CODE BEGIN Updated_Length_Service_1_Char_1*/
 
       /* USER CODE END Updated_Length_Service_1_Char_1*/
-      ret = Generic_STM_App_Update_Char_Ext(Connection_Handle, CustomContext.CustomStatHdle, CustomContext.CustomGoodHdle, SizeGood, pPayload);
+      ret = Generic_STM_App_Update_Char_Ext(Connection_Handle, CustomContext.CustomStatHdle, CustomContext.CustomLedHdle, SizeLed, pPayload);
 
       if (ret != BLE_STATUS_SUCCESS)
       {

@@ -118,8 +118,8 @@
 /**
  * Device name configuration for Generic Access Service
  */
-#define CFG_GAP_DEVICE_NAME             "EMBER_STM32"
-#define CFG_GAP_DEVICE_NAME_LENGTH      (11)
+#define CFG_GAP_DEVICE_NAME             "EMBER V1"
+#define CFG_GAP_DEVICE_NAME_LENGTH      (8)
 
 /**
  * Define PHY

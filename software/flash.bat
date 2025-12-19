@@ -11,6 +11,12 @@ REM Define paths
 set PROGRAMMER="c:\Program Files\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe"
 set BUILD_DIR=build
 
+REM FUS/BLE firmware filenames and addresses (editable)
+set FUS_BIN=stm32wb5x_FUS_fw.bin
+set FUS_ADDR=0x0807A000
+set BLE_BIN=stm32wb5x_BLE_Stack_full_fw.bin
+set BLE_ADDR=0x0805C000
+
 REM USB port assignment
 set MCU_USB=usb1
 
@@ -38,24 +44,25 @@ if not exist "%BUILD_DIR%" (
 REM Parse command line arguments
 set CONFIG=%1
 
-if "%CONFIG%"=="" (
-    echo Usage: flash.bat [CONFIG]
-    echo.
-    echo Configs:
-    echo   debug     - Flash debug build
-    echo   release   - Flash release build
-    echo.
-    echo Examples:
-    echo   flash.bat debug
-    echo   flash.bat release
-    exit /b 0
+echo %CONFIG%
+
+
+
+REM If invoked as: flash.bat ffus -> only run FUS upgrade
+if "%CONFIG%"=="ffus" (
+    goto :RUN_FUS_ONLY
+)
+REM If invoked as: flash.bat ble -> only run BLE upgrade
+if "%CONFIG%"=="ble" (
+    goto :RUN_BLE_ONLY
 )
 
 REM Validate config
 if not "%CONFIG%"=="debug" if not "%CONFIG%"=="release" (
-    echo ERROR: Invalid configuration. Use 'debug' or 'release'
+    echo ERROR: Invalid configuration. Use 'debug', 'release', 'ffus' or 'ble'
     exit /b 1
 )
+
 
 REM Flash firmware
 echo.
@@ -74,4 +81,35 @@ if errorlevel 1 (
     exit /b 1
 )
 echo Firmware flashed successfully!
+REM No automatic FUS upgrade after flashing in this mode. Use 'flash.bat ffus' to run FUS.
+
+exit /b 0
+
+:RUN_FUS_ONLY
+:RUN_FUS_ONLY
+echo Running FUS firmware upgrade (standalone)...
+if not exist "%FUS_BIN%" (
+    echo ERROR: FUS binary %FUS_BIN% not found in current directory
+    exit /b 1
+) 
+%PROGRAMMER% -c port=%MCU_USB% -fwupgrade %FUS_BIN% %FUS_ADDR% firstinstall=0
+if errorlevel 1 (
+    echo ERROR: FUS upgrade failed
+    exit /b 1
+)
+echo FUS upgrade completed successfully!
+exit /b 0
+
+:RUN_BLE_ONLY
+echo Running BLE firmware upgrade (standalone)...
+if not exist "%BLE_BIN%" (
+    echo ERROR: BLE binary %BLE_BIN% not found in current directory
+    exit /b 1
+) 
+%PROGRAMMER% -c port=%MCU_USB% -fwupgrade %BLE_BIN% %BLE_ADDR% firstinstall=0
+if errorlevel 1 (
+    echo ERROR: BLE upgrade failed
+    exit /b 1
+)
+echo BLE upgrade completed successfully!
 exit /b 0

@@ -35,14 +35,14 @@ extern "C" {
 typedef enum
 {
   /* EMBER_STATUS */
-  CUSTOM_STM_GOOD,
+  CUSTOM_STM_LED,
 } Custom_STM_Char_Opcode_t;
 
 typedef enum
 {
-  /* IS_GOOD */
-  CUSTOM_STM_GOOD_READ_EVT,
-  CUSTOM_STM_GOOD_WRITE_NO_RESP_EVT,
+  /* LED_STATUS */
+  CUSTOM_STM_LED_READ_EVT,
+  CUSTOM_STM_LED_WRITE_NO_RESP_EVT,
   CUSTOM_STM_NOTIFICATION_COMPLETE_EVT,
 
   CUSTOM_STM_BOOT_REQUEST_EVT
@@ -68,7 +68,7 @@ typedef struct
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
-extern uint16_t SizeGood;
+extern uint16_t SizeLed;
 
 /* USER CODE BEGIN EC */
 
