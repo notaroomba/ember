@@ -50,7 +50,8 @@ extern "C" {
  * ============================================================================ */
 #define TPS25730_I2C_ADDRESS    0x20        // USB-PD controller
 #define TMP116_I2C_ADDR         0x48        // Temperature sensor (ADD0 = GND)
-#define NFC_I2C_ADDRESS         0x04        // NT3H2111 NFC tag (7-bit address, byte=0x08)
+#define NFC_I2C_ADDRESS         0x55        // NT3H2111 NFC tag (7-bit address, byte=0x08)
+#define OLED_I2C_ADDRESS        0xC3        // OLED display (7-bit address, byte=0xC3)
 
 /* ============================================================================
  * NFC Configuration

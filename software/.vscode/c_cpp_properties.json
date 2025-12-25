@@ -10,6 +10,7 @@
         "Drivers/MAX31865",
         "Drivers/MAX6675",
         "Drivers/NT3H2111",
+        "Drivers/SSD1306",
         "Drivers/STM32WBxx_HAL_Driver/Inc",
         "Drivers/STM32WBxx_HAL_Driver/Inc/Legacy",
         "Drivers/Speaker",
@@ -38,7 +39,7 @@
         "STM32WB55xx",
         "USE_HAL_DRIVER"
       ],
-      "compilerPath": "c:\\Users\\Nathan Alspaugh\\AppData\\Roaming\\Code\\User\\globalStorage\\bmd.stm32-for-vscode\\@xpack-dev-tools\\arm-none-eabi-gcc\\14.2.1-1.1.1\\.content\\bin\\arm-none-eabi-gcc.EXE"
+      "compilerPath": "c:\\Users\\Nathan\\AppData\\Roaming\\Code\\User\\globalStorage\\bmd.stm32-for-vscode\\@xpack-dev-tools\\arm-none-eabi-gcc\\14.2.1-1.1.1\\.content\\bin\\arm-none-eabi-gcc.EXE"
     }
   ],
   "version": 4

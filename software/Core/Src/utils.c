@@ -171,3 +171,26 @@ void LEDs_Off(void) {
     Set_LED_Status(LED_STATUS_GOOD, OFF);
     Set_LED_Status(LED_STATUS_ERROR, OFF);
 }
+
+/**
+ * @brief Scan an I2C bus for devices and print their 7-bit addresses
+ * @param hi2c Pointer to I2C handle (e.g., &hi2c3)
+ * @return Number of devices found
+ */
+int I2C_ScanBus(I2C_HandleTypeDef *hi2c)
+{
+    int found = 0;
+    print("I2C scan starting...\r\n");
+
+    /* Probe all 7-bit addresses 0x01..0x7F */
+    for (uint16_t addr = 1; addr < 0xFF; ++addr) {
+        HAL_StatusTypeDef res = HAL_I2C_IsDeviceReady(hi2c, (uint16_t)(addr << 1), 1, 10);
+        if (res == HAL_OK) {
+            print("  Device at 0x%02X\r\n", (uint8_t)addr);
+            ++found;
+        }
+    }
+
+    print("I2C scan complete, %d device(s) found\r\n", found);
+    return found;
+}

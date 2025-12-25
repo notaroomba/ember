@@ -99,6 +99,9 @@ Drivers/MAX6675/driver_max6675.c \
 Drivers/MAX6675/driver_max6675_basic.c \
 Drivers/MAX6675/driver_max6675_interface.c \
 Drivers/NT3H2111/nt3h.c \
+Drivers/SSD1306/ssd1306.c \
+Drivers/SSD1306/ssd1306_fonts.c \
+Drivers/SSD1306/ssd1306_tests.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_cortex.c \
 Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_dma.c \
@@ -262,6 +265,7 @@ C_INCLUDES =  \
 -IDrivers/MAX31865 \
 -IDrivers/MAX6675 \
 -IDrivers/NT3H2111 \
+-IDrivers/SSD1306 \
 -IDrivers/STM32WBxx_HAL_Driver/Inc \
 -IDrivers/STM32WBxx_HAL_Driver/Inc/Legacy \
 -IDrivers/Speaker \

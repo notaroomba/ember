@@ -162,12 +162,12 @@ NFC_Status_t NFC_Init(void)
     nt3h_status_t status;
     
     /* Find NFC device on I2C3 (scans for any address except TMP119 at 0x48) */
-    uint8_t found_addr = nfc_find_device();
-    if (found_addr == 0) {
-        print("NFC: Not found\r\n");
-        return NFC_ERROR;
-    }
-    
+    // uint8_t found_addr = nfc_find_device();
+    // if (found_addr == 0) {
+    //     print("NFC: Not found\r\n");
+    //     return NFC_ERROR;
+    // }
+    uint8_t found_addr = NFC_I2C_ADDRESS;
     /* Configure NT3H device */
     nfc_dev.dev_id = found_addr;
     nfc_dev.write = nfc_i2c_write;

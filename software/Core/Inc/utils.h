@@ -75,7 +75,12 @@ uint32_t LEDs_GetBlinkInterval(void);
 void LEDs_On(void);
 void LEDs_Blinking(void);
 void LEDs_Off(void);
-
+/**
+ * @brief Scan an I2C bus for devices and print found addresses via USB CDC
+ * @param hi2c Pointer to the I2C handle (e.g., &hi2c3)
+ * @return number of devices found
+ */
+int I2C_ScanBus(I2C_HandleTypeDef *hi2c);
 
 #ifdef __cplusplus
 }

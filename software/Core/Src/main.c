@@ -39,6 +39,9 @@
 
 #include "swallow2.h"
 
+#include "ssd1306.h"
+#include "ssd1306_tests.h"
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,6 +62,7 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c3;
+DMA_HandleTypeDef hdma_i2c3_tx;
 
 IPCC_HandleTypeDef hipcc;
 
@@ -86,12 +90,20 @@ static uint32_t encoder_tone_base_freq = 2093; // C7
 static int16_t encoder_tone_steps = 0; // steps from base, CCW +1 => +50Hz
 static uint32_t encoder_tone_step_hz = 50; // Hz per step
 static uint32_t encoder_tone_current_freq = 2093; // Start at base freq
+
+/* Random teleport variables for SSD1306 */
+static uint32_t last_teleport = 0;
+static const uint32_t TELEPORT_INTERVAL_MS = 300; // teleport interval
+static const uint8_t TELEPORT_RADIUS = 10; // circle radius
+
+SSD1306_t SSD1306_Disp;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_QUADSPI_Init(void);
@@ -149,6 +161,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_I2C3_Init();
   MX_QUADSPI_Init();
@@ -163,6 +176,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
   
   HAL_Delay(1000);
+
+  /* Prevent unused-variable warnings until poll code is enabled */
+  (void)last_temp_read;
+  (void)last_ina226_poll;
+
+  /* Scan I2C3 bus for devices */
+  // int i2c3_devices = I2C_ScanBus(&hi2c3);
+  // print("I2C3: %d device(s) found\r\n", i2c3_devices);
 
   /* Register LED pins with utils so Update_LEDs can control them */
   LEDs_RegisterPin(LED_STATUS_PD,       LED_PD_GPIO_Port,       LED_PD_Pin);
@@ -309,8 +330,21 @@ int main(void)
     LEDs_Off();
     Set_LED_Status(LED_STATUS_GOOD, ON);
     Set_LED_Status(LED_STATUS_PD, BLINKING);
-    
 
+    ssd1306_Init();
+
+
+    // ssd1306_TestAll();
+
+ 
+    // HAL_Delay(500);
+    // ssd1306_FillCircle(64, 32, 10, White);
+    // ssd1306_UpdateScreen();
+    // HAL_Delay(500);
+    // ssd1306_FillCircle(64, 32, 10, White);
+    // ssd1306_UpdateScreen();
+    // ssd1306_FillCircle(64, 32, 10, White);
+    // ssd1306_UpdateScreen();
   /* USER CODE END 2 */
 
   /* Init code for STM32_WPAN */
@@ -324,11 +358,19 @@ int main(void)
     Input_Poll();
     Update_LEDs();
     Speaker_Update(speaker);
-
- 
-
     
-    
+    // Random teleport – only attempt when SSD1306 is ready to accept a new frame
+    if ((int32_t)(HAL_GetTick() - last_teleport) >= (int32_t)TELEPORT_INTERVAL_MS) {
+        if (SSD1306_Disp.state == SSD1306_STATE_READY) {
+            last_teleport = HAL_GetTick();
+            ssd1306_Fill(Black); // clear buffer
+            uint8_t x = (uint8_t)(rand() % (SSD1306_WIDTH - 2*TELEPORT_RADIUS)) + TELEPORT_RADIUS;
+            uint8_t y = (uint8_t)(rand() % (SSD1306_HEIGHT - 2*TELEPORT_RADIUS)) + TELEPORT_RADIUS;
+            ssd1306_FillCircle(x, y, TELEPORT_RADIUS, White);
+            ssd1306_UpdateScreen();
+        }
+    }
+
     // Handle encoder events
     if (input_encoder_cw) {
       input_encoder_cw = false;
@@ -416,7 +458,6 @@ int main(void)
 
       }
     }
-    
     // Poll INA226 for current/voltage every 500ms
     // if ((HAL_GetTick() - last_ina226_poll) >= 500) {
     //   last_ina226_poll = HAL_GetTick();
@@ -617,7 +658,7 @@ static void MX_I2C3_Init(void)
   /* USER CODE END I2C3_Init 0 */
 
   /* USER CODE BEGIN I2C3_Init 1 */
-
+  hi2c3.hdmatx = &hdma_i2c3_tx;
   /* USER CODE END I2C3_Init 1 */
   hi2c3.Instance = I2C3;
   hi2c3.Init.Timing = 0x10B17DB5;
@@ -1036,6 +1077,26 @@ static void MX_TIM2_Init(void)
   }
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMAMUX1_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMAMUX1_OVR_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMAMUX1_OVR_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMAMUX1_OVR_IRQn);
 
 }
 
