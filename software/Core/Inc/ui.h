@@ -77,6 +77,7 @@ void ui_init(void);
 // Screens: start a menu/graph screen (takes pointer to user allocated object)
 void ui_start_menu(ui_menu_t *menu);
 void ui_start_graph(ui_graph_t *graph);
+void ui_show_home(ui_menu_t *menu); // show branded home screen that can jump to a menu
 void ui_graph_push(ui_graph_t *g, int16_t value);
 
 // Button screen helper

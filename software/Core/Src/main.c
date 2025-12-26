@@ -352,9 +352,10 @@ int main(void)
     // select the preferred font: try Minecraft 8x10 first, then configured default
     main_menu.font = &fontBlenderProBold18pt13x19;
     // main_menu.title = "Main Menu";
-    main_menu.on_select = main_menu_select_cb;
+    // main_menu.on_select = main_menu_select_cb;
     main_menu.cb_ctx = NULL;
-    ui_start_menu(&main_menu);
+    // Show the branded home screen and allow the user to press OK to enter the main menu
+    ui_show_home(&main_menu);
 
     // ssd1306_TestAll();
 
@@ -1267,8 +1268,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-// Add callback implementation
-static void main_menu_select_cb(uint8_t idx, void *ctx) {
-    (void)ctx;
-    print("Menu item %u selected\r\n", idx);
-}

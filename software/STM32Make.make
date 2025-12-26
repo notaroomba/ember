@@ -136,6 +136,7 @@ Drivers/Speaker/speaker.c \
 Drivers/TMP116/tmp116.c \
 Drivers/TPS25730/tps25730_driver.c \
 Fonts/blenderProBold.c \
+Fonts/ethnocentric.c \
 Fonts/minecraft.c \
 Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \

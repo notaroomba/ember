@@ -8,7 +8,7 @@
 #include "utils.h"
 #include <string.h>
 #include <stdlib.h>
-
+#include <ctype.h>
 /* Use the global SSD1306_Disp structure defined in main.c for driver state */
 extern SSD1306_t SSD1306_Disp;
 
@@ -40,7 +40,10 @@ static int ui_stack_top = -1;
 typedef struct {
     const char *title;
     const char *text;
-    const SSD1306_Font_t *font;
+    const SSD1306_Font_t *font;   // title font
+    const SSD1306_Font_t *hint_font; // optional font for hint text
+    void (*on_ok)(void *ctx);    // callback when OK pressed on this text screen
+    void *on_ok_ctx;
 } ui_text_t;
 static ui_text_t text_screen;
 
@@ -68,7 +71,7 @@ static uint16_t calc_text_width(const SSD1306_Font_t *font, const char *str) {
     while (*str) {
         if (font->char_width) w += font->char_width[(unsigned char)*str - 32];
         else w += font->width;
-        if (*(str + 1) != '\0') w += spacing;
+        if (*(str + 1) != '\0' ) w += spacing;
         ++str;
     }
     return w;
@@ -91,6 +94,74 @@ static void write_string_clipped(const SSD1306_Font_t *font, const char *str, ui
         buf[--len] = '\0';
     }
     ssd1306_WriteString(buf, *font, color);
+}
+
+// Count how many wrapped lines a string would take for a given pixel width
+static uint8_t wrapped_line_count(const SSD1306_Font_t *font, const char *s, uint8_t max_w)
+{
+    if (!font || !s || max_w == 0) return 0;
+    const char *p = s;
+    uint8_t lines = 0;
+    while (*p) {
+        size_t len = strlen(p);
+        if (len == 0) break;
+        size_t fit = 0;
+        for (size_t j = 1; j <= len && j < 128; ++j) {
+            char tmp[128];
+            size_t copy = (j < sizeof(tmp) ? j : (sizeof(tmp)-1));
+            strncpy(tmp, p, copy);
+            tmp[copy] = '\0';
+            if (calc_text_width(font, tmp) <= max_w) fit = j; else break;
+        }
+        if (fit == 0) fit = 1;
+        size_t br = fit;
+        for (size_t k = fit; k > 0; --k) {
+            if (isspace((unsigned char)p[k-1])) { br = k; break; }
+        }
+        if (br == 0) br = fit;
+        p += br;
+        while (*p && isspace((unsigned char)*p)) ++p;
+        lines++;
+    }
+    return lines;
+}
+
+// Write wrapped and centered lines (centers each wrapped line individually)
+static void write_wrapped_center(const SSD1306_Font_t *font, const char *s, uint8_t y, uint8_t max_w, uint8_t max_lines, SSD1306_COLOR color)
+{
+    if (!font || !s) return;
+    const char *p = s;
+    uint8_t out = 0;
+    while (*p && (max_lines == 0 || out < max_lines)) {
+        size_t len = strlen(p);
+        size_t fit = 0;
+        for (size_t j = 1; j <= len && j < 128; ++j) {
+            char tmp[128];
+            size_t copy = (j < sizeof(tmp) ? j : (sizeof(tmp)-1));
+            strncpy(tmp, p, copy);
+            tmp[copy] = '\0';
+            if (calc_text_width(font, tmp) <= max_w) fit = j; else break;
+        }
+        if (fit == 0) fit = 1;
+        size_t br = fit;
+        for (size_t k = fit; k > 0; --k) {
+            if (isspace((unsigned char)p[k-1])) { br = k; break; }
+        }
+        if (br == 0) br = fit;
+        char tmp[128];
+        size_t copy = (br < sizeof(tmp) ? br : (sizeof(tmp)-1));
+        strncpy(tmp, p, copy);
+        tmp[copy] = '\0';
+        while (copy > 0 && isspace((unsigned char)tmp[copy-1])) tmp[--copy] = '\0';
+        uint16_t tw = calc_text_width(font, tmp);
+        uint8_t x = (SSD1306_WIDTH > tw) ? ((SSD1306_WIDTH - tw) / 2) : 0;
+        ssd1306_SetCursor(x, y);
+        ssd1306_WriteString(tmp, *font, color);
+        p += br;
+        while (*p && isspace((unsigned char)*p)) ++p;
+        y += font->height;
+        out++;
+    }
 }
 
 // Render menu into SSD1306 buffer (does not start display transfer)
@@ -244,8 +315,11 @@ static void menu_handle_event(ui_event_t evt) {
             } else {
                 // default: push a text screen showing the selected item
                 text_screen.title = m->items[m->selected];
-                text_screen.text = NULL;
+                text_screen.text = "Press and hold to return";
                 text_screen.font = m->font ? m->font : &Font_11x18;
+                text_screen.hint_font = &Font_6x8;
+                text_screen.on_ok = NULL;
+                text_screen.on_ok_ctx = NULL;
                 ui_push_screen(UI_SCR_TEXT, &text_screen);
             }
             break;
@@ -483,6 +557,16 @@ void ui_handle_event(ui_event_t evt) {
         menu_handle_event(evt);
     } else if (current_type == UI_SCR_GRAPH) {
         graph_handle_event(evt);
+    } else if (current_type == UI_SCR_TEXT) {
+        // BACK (long-press) exits text screen
+        if (evt == UI_EVT_BACK) {
+            ui_pop_screen();
+        } else if (evt == UI_EVT_OK) {
+            // Short press invokes on_ok callback if provided
+            if (text_screen.on_ok) {
+                text_screen.on_ok(text_screen.on_ok_ctx);
+            }
+        }
     }
 }
 
@@ -535,16 +619,61 @@ static void ui_pop_screen(void)
     request_render();
 }
 
+// Home-screen helper: invoked when the small text OK is pressed
+static void home_on_ok(void *ctx) {
+    ui_menu_t *m = (ui_menu_t *)ctx;
+    ui_pop_screen();
+    if (m) ui_start_menu(m);
+}
+
+// Show a branded home screen (uses Ethnocentric title if available, Blender hint if available)
+void ui_show_home(ui_menu_t *menu)
+{
+    text_screen.title = "Ember";
+    text_screen.text = "Push Button";
+
+    // Prefer Ethnocentric title font if available
+#ifdef SSD1306_ETHNOCENTRIC_FONT_16x18
+    text_screen.font = &fontEthnocentric13pt16x13;
+#else
+    text_screen.font = &Font_11x18;
+#endif
+
+    // Prefer Blender Pro Bold for the hint if available
+#ifdef SSD1306_BLENDER_PRO_BOLD_FONT_12x15
+    text_screen.hint_font = &fontBlenderProBold16pt12x17;
+#else
+    text_screen.hint_font = &Font_6x8;
+#endif
+
+    text_screen.on_ok = home_on_ok;
+    text_screen.on_ok_ctx = menu;
+
+    ui_push_screen(UI_SCR_TEXT, &text_screen);
+}
+
 // Render function for text screen
 static void render_text(void)
 {
     ssd1306_Fill(SSD1306_PX_CLR_BLACK);
-    if (text_screen.title) {
-        ssd1306_SetCursor(0, 0);
-        ssd1306_WriteString((char*)text_screen.title, *(text_screen.font ? text_screen.font : &Font_11x18), White);
-    }
-    if (text_screen.text) {
-        ssd1306_SetCursor(0, text_screen.font ? text_screen.font->height + 2 : Font_11x18.height + 2);
-        ssd1306_WriteString((char*)text_screen.text, Font_6x8, White);
-    }
+    const SSD1306_Font_t *title_font = text_screen.font ? text_screen.font : &Font_11x18;
+    const SSD1306_Font_t *hint_font = text_screen.hint_font ? text_screen.hint_font : &Font_6x8;
+    const char *title = text_screen.title ? text_screen.title : "";
+    const char *hint = text_screen.text ? text_screen.text : "Press and hold to return";
+
+    // compute wrapped line counts
+    uint8_t max_w = SSD1306_WIDTH;
+    uint8_t title_lines = wrapped_line_count(title_font, title, max_w);
+    uint8_t hint_lines = wrapped_line_count(hint_font, hint, max_w);
+
+    uint8_t gap = 4;
+    uint16_t total_h = (uint16_t)title_lines * title_font->height + gap + (uint16_t)hint_lines * hint_font->height;
+    uint8_t start_y = (SSD1306_HEIGHT > total_h) ? (SSD1306_HEIGHT - total_h) / 2 : 0;
+
+    // draw title (centered, wrapped)
+    write_wrapped_center(title_font, title, start_y, max_w, title_lines, White);
+
+    // draw hint below title
+    uint8_t hint_y = start_y + title_lines * title_font->height + gap;
+    write_wrapped_center(hint_font, hint, hint_y, max_w, hint_lines, White);
 }
