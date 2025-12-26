@@ -330,7 +330,7 @@ int main(void)
     LEDs_Off();
     Set_LED_Status(LED_STATUS_GOOD, ON);
     Set_LED_Status(LED_STATUS_PD, BLINKING);
-
+    // u8g2_Setup_ssd1306_i2c_128x64_noname_1();
     ssd1306_Init();
 
 

@@ -88,6 +88,7 @@ includeDirectories:
   - Drivers/MAX31865/**
   - Drivers/MAX6675/**
   - Drivers/SSD1306/**
+  - Drivers/U8G2/**
 
 
 # Files that should be included in the compilation.
@@ -107,6 +108,7 @@ sourceFiles:
   - Drivers/MAX31865/**
   - Drivers/MAX6675/**
   - Drivers/SSD1306/**
+  - Drivers/U8G2/**
 
 
 # When no makefile is present it will show a warning pop-up.
