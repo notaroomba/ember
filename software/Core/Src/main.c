@@ -121,7 +121,47 @@ static void MX_IPCC_Init(void);
 static void MX_RTC_Init(void);
 static void MX_RF_Init(void);
 /* USER CODE BEGIN PFP */
-
+/**
+  * @brief Callback for main menu selections
+  * @param idx: Index of the selected item
+  * @param ctx: Context pointer (ui_menu_t *)
+  * @retval None
+  */
+static void main_menu_select_cb(uint8_t idx, void *ctx) {
+    ui_menu_t *m = (ui_menu_t *)ctx;
+    switch (idx) {
+        case 0: // Home
+            ui_show_home(m);
+            break;
+        case 1: { // Status - show USB-C PD voltage & amperage
+            static char status_buf[64];
+            if (tps_handle != NULL) {
+                uint32_t voltage_mv = 0, current_ma = 0;
+                if (TPS25730_GetActiveVoltage(tps_handle, &voltage_mv, &current_ma)) {
+                    uint32_t volts = voltage_mv / 1000;
+                    uint32_t vfrac = (voltage_mv % 1000) / 10; // hundredths
+                    uint32_t amps_int = current_ma / 1000;
+                    uint32_t amps_frac = (current_ma % 1000) / 10; // hundredths
+                    snprintf(status_buf, sizeof(status_buf), "%lu.%02lu V\n%lu.%02lu A (%lumA)", volts, vfrac, amps_int, amps_frac, current_ma);
+                } else {
+                    snprintf(status_buf, sizeof(status_buf), "USB-C PD: unavailable");
+                }
+            } else {
+                snprintf(status_buf, sizeof(status_buf), "USB-C PD: not initialized");
+            }
+            ui_show_text("USB-C PD", status_buf, &Font_11x18, &Font_6x8, NULL, NULL);
+            break;
+        }
+        case 2: // Settings
+            ui_show_text("Settings", "No settings yet\nPress and hold to return", &Font_11x18, &Font_6x8, NULL, NULL);
+            break;
+        case 3: // About
+            ui_show_text("About", "Ember V1\n@NotARoomba", &Font_11x18, &Font_6x8, NULL, NULL);
+            break;
+        default:
+            break;
+    }
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -352,8 +392,8 @@ int main(void)
     // select the preferred font: try Minecraft 8x10 first, then configured default
     main_menu.font = &fontBlenderProBold18pt13x19;
     // main_menu.title = "Main Menu";
-    // main_menu.on_select = main_menu_select_cb;
-    main_menu.cb_ctx = NULL;
+    main_menu.on_select = main_menu_select_cb;
+    main_menu.cb_ctx = &main_menu;
     // Show the branded home screen and allow the user to press OK to enter the main menu
     ui_show_home(&main_menu);
 
@@ -1268,3 +1308,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+

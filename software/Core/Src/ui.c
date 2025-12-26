@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdio.h>
 /* Use the global SSD1306_Disp structure defined in main.c for driver state */
 extern SSD1306_t SSD1306_Disp;
 
@@ -41,9 +42,15 @@ typedef struct {
     const char *title;
     const char *text;
     const SSD1306_Font_t *font;   // title font
-    const SSD1306_Font_t *hint_font; // optional font for hint text
+    const SSD1306_Font_t *hint_font; // optional font for hint text (small)
     void (*on_ok)(void *ctx);    // callback when OK pressed on this text screen
     void *on_ok_ctx;
+
+    // New: optional two-word button hint rendered side-by-side (home screen)
+    const char *btn_left;
+    const char *btn_right;
+    const SSD1306_Font_t *btn_font; // font for the left/right words (defaults to hint_font)
+    const char *subtitle; // small text rendered under the two words, uses hint_font
 } ui_text_t;
 static ui_text_t text_screen;
 
@@ -69,9 +76,12 @@ static uint16_t calc_text_width(const SSD1306_Font_t *font, const char *str) {
     if (!font || !str) return 0;
     uint8_t spacing = SSD1306_Disp.CharSpacing;
     while (*str) {
-        if (font->char_width) w += font->char_width[(unsigned char)*str - 32];
-        else w += font->width;
-        if (*(str + 1) != '\0' ) w += spacing;
+        unsigned char ch = (unsigned char)*str;
+        if (ch >= 32 && ch <= 126) {
+            if (font->char_width) w += font->char_width[ch - 32];
+            else w += font->width;
+            if (*(str + 1) != '\0') w += spacing;
+        }
         ++str;
     }
     return w;
@@ -103,6 +113,8 @@ static uint8_t wrapped_line_count(const SSD1306_Font_t *font, const char *s, uin
     const char *p = s;
     uint8_t lines = 0;
     while (*p) {
+        // explicit newline -> empty line
+        if (*p == '\n') { ++p; lines++; continue; }
         size_t len = strlen(p);
         if (len == 0) break;
         size_t fit = 0;
@@ -120,7 +132,7 @@ static uint8_t wrapped_line_count(const SSD1306_Font_t *font, const char *s, uin
         }
         if (br == 0) br = fit;
         p += br;
-        while (*p && isspace((unsigned char)*p)) ++p;
+        while (*p && isspace((unsigned char)*p) && *p != '\n') ++p;
         lines++;
     }
     return lines;
@@ -133,6 +145,8 @@ static void write_wrapped_center(const SSD1306_Font_t *font, const char *s, uint
     const char *p = s;
     uint8_t out = 0;
     while (*p && (max_lines == 0 || out < max_lines)) {
+        // explicit newline handling
+        if (*p == '\n') { p++; y += font->height; out++; continue; }
         size_t len = strlen(p);
         size_t fit = 0;
         for (size_t j = 1; j <= len && j < 128; ++j) {
@@ -158,7 +172,7 @@ static void write_wrapped_center(const SSD1306_Font_t *font, const char *s, uint
         ssd1306_SetCursor(x, y);
         ssd1306_WriteString(tmp, *font, color);
         p += br;
-        while (*p && isspace((unsigned char)*p)) ++p;
+        while (*p && isspace((unsigned char)*p) && *p != '\n') ++p;
         y += font->height;
         out++;
     }
@@ -320,6 +334,11 @@ static void menu_handle_event(ui_event_t evt) {
                 text_screen.hint_font = &Font_6x8;
                 text_screen.on_ok = NULL;
                 text_screen.on_ok_ctx = NULL;
+                // clear any home-specific fields
+                text_screen.btn_left = NULL;
+                text_screen.btn_right = NULL;
+                text_screen.btn_font = NULL;
+                text_screen.subtitle = NULL;
                 ui_push_screen(UI_SCR_TEXT, &text_screen);
             }
             break;
@@ -630,7 +649,7 @@ static void home_on_ok(void *ctx) {
 void ui_show_home(ui_menu_t *menu)
 {
     text_screen.title = "Ember";
-    text_screen.text = "Push Button";
+    text_screen.text = NULL; // use side-by-side button text instead of single hint
 
     // Prefer Ethnocentric title font if available
 #ifdef SSD1306_ETHNOCENTRIC_FONT_32x24
@@ -639,12 +658,18 @@ void ui_show_home(ui_menu_t *menu)
     text_screen.font = &Font_11x18;
 #endif
 
-    // Prefer Blender Pro Bold for the hint if available
-#ifdef SSD1306_BLENDER_PRO_BOLD_FONT_12x15
-    text_screen.hint_font = &fontBlenderProBold16pt12x17;
+    // Prefer Blender Pro Bold for the side-by-side button labels if available
+#ifdef SSD1306_BLENDER_PRO_BOLD_FONT_13x19
+    text_screen.btn_font = &fontBlenderProBold18pt13x19;
 #else
-    text_screen.hint_font = &Font_6x8;
+    text_screen.btn_font = &Font_11x18;
 #endif
+    text_screen.btn_left = "Push";
+    text_screen.btn_right = "Button";
+
+    // small subtitle (use same font as 'press and hold to return')
+    text_screen.subtitle = "@NotARoomba";
+    text_screen.hint_font = &Font_6x8;
 
     text_screen.on_ok = home_on_ok;
     text_screen.on_ok_ctx = menu;
@@ -664,9 +689,57 @@ static void render_text(void)
     // compute wrapped line counts
     uint8_t max_w = SSD1306_WIDTH;
     uint8_t title_lines = wrapped_line_count(title_font, title, max_w);
-    uint8_t hint_lines = wrapped_line_count(hint_font, hint, max_w);
 
     uint8_t gap = 4;
+
+    // Special layout: if two-word button text is present, render it side-by-side and a small subtitle below
+    if (text_screen.btn_left && text_screen.btn_right) {
+        const SSD1306_Font_t *btn_font = text_screen.btn_font ? text_screen.btn_font : hint_font;
+        const char *subtitle = text_screen.subtitle ? text_screen.subtitle : "";
+        uint8_t subtitle_lines = wrapped_line_count(hint_font, subtitle, max_w);
+
+        uint16_t total_h = (uint16_t)title_lines * title_font->height + gap + (uint16_t)btn_font->height + gap + (uint16_t)subtitle_lines * hint_font->height;
+        uint8_t start_y = (SSD1306_HEIGHT > total_h) ? (SSD1306_HEIGHT - total_h) / 2 : 0;
+
+        // draw title
+        write_wrapped_center(title_font, title, start_y, max_w, title_lines, White);
+
+        // draw side-by-side buttons
+        uint8_t btn_y = start_y + title_lines * title_font->height + gap;
+        uint16_t left_w = calc_text_width(btn_font, text_screen.btn_left);
+        uint16_t right_w = calc_text_width(btn_font, text_screen.btn_right);
+        uint16_t between = 8; // px gap
+        uint32_t combined = left_w + between + right_w;
+        if (combined > SSD1306_WIDTH) {
+            // try to reduce gap
+            if ((left_w + right_w) <= SSD1306_WIDTH) {
+                between = SSD1306_WIDTH - (left_w + right_w);
+                combined = left_w + between + right_w;
+            } else {
+                // fallback: render as single centered string
+                char buf[128];
+                snprintf(buf, sizeof(buf), "%s %s", text_screen.btn_left, text_screen.btn_right);
+                write_wrapped_center(btn_font, buf, btn_y, max_w, 1, White);
+                goto draw_subtitle;
+            }
+        }
+        uint8_t start_x = (SSD1306_WIDTH > combined) ? ((SSD1306_WIDTH - combined) / 2) : 0;
+        ssd1306_SetCursor(start_x, btn_y);
+        ssd1306_WriteString((char*)text_screen.btn_left, *btn_font, White);
+        ssd1306_SetCursor(start_x + left_w + between, btn_y);
+        ssd1306_WriteString((char*)text_screen.btn_right, *btn_font, White);
+
+    draw_subtitle:
+        // draw subtitle below buttons
+        uint8_t subtitle_y = btn_y + btn_font->height + gap;
+        if (subtitle_lines > 0) {
+            write_wrapped_center(hint_font, subtitle, subtitle_y, max_w, subtitle_lines, White);
+        }
+        return;
+    }
+
+    // Default layout: title, then wrapped hint centered
+    uint8_t hint_lines = wrapped_line_count(hint_font, hint, max_w);
     uint16_t total_h = (uint16_t)title_lines * title_font->height + gap + (uint16_t)hint_lines * hint_font->height;
     uint8_t start_y = (SSD1306_HEIGHT > total_h) ? (SSD1306_HEIGHT - total_h) / 2 : 0;
 
@@ -676,4 +749,21 @@ static void render_text(void)
     // draw hint below title
     uint8_t hint_y = start_y + title_lines * title_font->height + gap;
     write_wrapped_center(hint_font, hint, hint_y, max_w, hint_lines, White);
+}
+
+// Public helper to show a text screen
+void ui_show_text(const char *title, const char *text, const SSD1306_Font_t *title_font, const SSD1306_Font_t *hint_font, void (*on_ok)(void *), void *ctx)
+{
+    text_screen.title = title;
+    text_screen.text = text;
+    text_screen.font = title_font ? title_font : &Font_11x18;
+    text_screen.hint_font = hint_font ? hint_font : &Font_6x8;
+    text_screen.on_ok = on_ok;
+    text_screen.on_ok_ctx = ctx;
+    // clear any home-specific fields
+    text_screen.btn_left = NULL;
+    text_screen.btn_right = NULL;
+    text_screen.btn_font = NULL;
+    text_screen.subtitle = NULL;
+    ui_push_screen(UI_SCR_TEXT, &text_screen);
 }

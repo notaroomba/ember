@@ -78,6 +78,7 @@ void ui_init(void);
 void ui_start_menu(ui_menu_t *menu);
 void ui_start_graph(ui_graph_t *graph);
 void ui_show_home(ui_menu_t *menu); // show branded home screen that can jump to a menu
+void ui_show_text(const char *title, const char *text, const SSD1306_Font_t *title_font, const SSD1306_Font_t *hint_font, void (*on_ok)(void *), void *ctx);
 void ui_graph_push(ui_graph_t *g, int16_t value);
 
 // Button screen helper
