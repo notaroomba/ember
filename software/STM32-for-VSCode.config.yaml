@@ -80,6 +80,7 @@ includeDirectories:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
+  - Fonts/**  
   - Drivers/TPS25730/**
   - Drivers/Speaker/**
   - Drivers/TMP116/**
@@ -100,6 +101,7 @@ sourceFiles:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
+  - Fonts/**
   - Drivers/TPS25730/**
   - Drivers/Speaker/**
   - Drivers/TMP116/**

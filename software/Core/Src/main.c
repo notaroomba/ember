@@ -42,6 +42,8 @@
 #include "ssd1306.h"
 #include "ssd1306_tests.h"
 #include <stdlib.h>
+#include "ui.h"
+#include "fonts.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,6 +97,9 @@ static uint32_t encoder_tone_current_freq = 2093; // Start at base freq
 static uint32_t last_teleport = 0;
 static const uint32_t TELEPORT_INTERVAL_MS = 300; // teleport interval
 static const uint8_t TELEPORT_RADIUS = 10; // circle radius
+
+// Forward-declare menu callback
+static void main_menu_select_cb(uint8_t idx, void *ctx);
 
 SSD1306_t SSD1306_Disp;
 /* USER CODE END PV */
@@ -333,6 +338,23 @@ int main(void)
     // u8g2_Setup_ssd1306_i2c_128x64_noname_1();
     ssd1306_Init();
 
+    // Initialize UI
+    ui_init();
+    static const char *main_menu_items[] = {"Home", "Status", "Settings", "About"};
+    static ui_menu_t main_menu; // initialize at runtime to allow Font_7x10 assignment
+    main_menu.items = main_menu_items;
+    main_menu.count = sizeof(main_menu_items)/sizeof(main_menu_items[0]);
+    main_menu.selected = 0;
+    main_menu.top = 0;
+    main_menu.lines = 4;
+    main_menu.left_padding = 2;
+    main_menu.right_padding = 2;
+    // select the preferred font: try Minecraft 8x10 first, then configured default
+    main_menu.font = &fontBlenderProBold18pt13x19;
+    // main_menu.title = "Main Menu";
+    main_menu.on_select = main_menu_select_cb;
+    main_menu.cb_ctx = NULL;
+    ui_start_menu(&main_menu);
 
     // ssd1306_TestAll();
 
@@ -358,9 +380,12 @@ int main(void)
     Input_Poll();
     Update_LEDs();
     Speaker_Update(speaker);
-    
-    // Random teleport – only attempt when SSD1306 is ready to accept a new frame
-    if ((int32_t)(HAL_GetTick() - last_teleport) >= (int32_t)TELEPORT_INTERVAL_MS) {
+
+    // let UI process events and redraw when ready
+    ui_tick();
+
+    // Random teleport – only attempt when no UI screen is active
+    if (!ui_is_active() && (int32_t)(HAL_GetTick() - last_teleport) >= (int32_t)TELEPORT_INTERVAL_MS) {
         if (SSD1306_Disp.state == SSD1306_STATE_READY) {
             last_teleport = HAL_GetTick();
             ssd1306_Fill(Black); // clear buffer
@@ -374,6 +399,9 @@ int main(void)
     // Handle encoder events
     if (input_encoder_cw) {
       input_encoder_cw = false;
+      // Notify UI (rotary clockwise -> DOWN)
+      ui_handle_event(UI_EVT_DOWN);
+
       print("Encoder CW, position: %ld\r\n", input_encoder_position);
       // Decrease pitch by 50 Hz per clockwise step
       encoder_tone_steps--;
@@ -387,6 +415,9 @@ int main(void)
     }
     if (input_encoder_ccw) {
       input_encoder_ccw = false;
+      // Notify UI (rotary counter-clockwise -> UP)
+      ui_handle_event(UI_EVT_UP);
+
       print("Encoder CCW, position: %ld\r\n", input_encoder_position);
       // Increase pitch by 50 Hz per counter-clockwise step
       encoder_tone_steps++;
@@ -398,24 +429,28 @@ int main(void)
         Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
       }
     }
-    
+
     // Handle button events
     if (input_button_pressed) {
       input_button_pressed = false;
+      // Notify UI (button press -> OK/select)
+      ui_handle_event(UI_EVT_OK);
+
       print("Button short press! Position: %ld\r\n", input_encoder_position);
-      if (speaker != NULL) {
-        // Play current beep and print frequency
-        // Speaker_Beep(speaker, (uint16_t)encoder_tone_current_freq, 40, 10, 1);
-        // print("Speaker current beep: %lu Hz\r\n", encoder_tone_current_freq);
-          Speaker_PlayMelody(speaker, swallow, sizeof(swallow)/sizeof(swallow[0]));
-        while(Speaker_Update(speaker)) {
+      // if (speaker != NULL) {
+      //   // Play current beep and print frequency
+      //   // Speaker_Beep(speaker, (uint16_t)encoder_tone_current_freq, 40, 10, 1);
+      //   // print("Speaker current beep: %lu Hz\r\n", encoder_tone_current_freq);
+      //     Speaker_PlayMelody(speaker, swallow, sizeof(swallow)/sizeof(swallow[0]));
+      //   while(Speaker_Update(speaker)) {
           
-        }
+      //   }
       }
       // TODO: Handle short press (e.g., select/confirm)
-    }
+    
     if (input_button_long_pressed) {
       input_button_long_pressed = false;
+      ui_handle_event(UI_EVT_BACK);
       print("Button long press!\r\n");
       // TODO: Handle long press (e.g., back/cancel)
     }
@@ -1110,7 +1145,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
-  /* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init 1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -1195,7 +1230,7 @@ static void MX_GPIO_Init(void)
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
-  /* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init 2 */
 }
 
 /* USER CODE BEGIN 4 */
@@ -1232,3 +1267,8 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+// Add callback implementation
+static void main_menu_select_cb(uint8_t idx, void *ctx) {
+    (void)ctx;
+    print("Menu item %u selected\r\n", idx);
+}

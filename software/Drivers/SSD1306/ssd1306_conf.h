@@ -6,6 +6,9 @@
 #ifndef __SSD1306_CONF_H__
 #define __SSD1306_CONF_H__
 
+// Pull in application-level configuration (font selection, etc.)
+#include "config.h"
+
 // Choose a microcontroller family
 #define STM32WB
 // #define STM32F0
@@ -53,14 +56,10 @@
 // # define SSD1306_INVERSE_COLOR
 
 // Include only needed fonts
-#define SSD1306_INCLUDE_FONT_6x8
-#define SSD1306_INCLUDE_FONT_7x10
-#define SSD1306_INCLUDE_FONT_11x18
-#define SSD1306_INCLUDE_FONT_16x26
-
-#define SSD1306_INCLUDE_FONT_16x24
-
-#define SSD1306_INCLUDE_FONT_16x15
+/* Font selection macros have been moved to Core/Inc/config.h to centralize
+   application-level configuration. Define SSD1306_INCLUDE_FONT_<WxH> there
+   to include specific fonts and reduce flash usage. */
+// e.g. #define SSD1306_INCLUDE_FONT_9x12
 
 // The width of the screen can be set using this
 // define. The default value is 128.

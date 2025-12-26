@@ -167,6 +167,7 @@ typedef struct {
     uint8_t Initialized;
     uint8_t DisplayOn;
     uint8_t state; /* 0 = ready, 1 = busy, 2 = error */
+    uint8_t CharSpacing; /* Extra pixels to add between characters when writing text */
 } SSD1306_t;
 
 typedef struct {
@@ -199,6 +200,10 @@ void ssd1306_FillCircle(uint8_t par_x,uint8_t par_y,uint8_t par_r,SSD1306_COLOR 
 void ssd1306_Polyline(const SSD1306_VERTEX *par_vertex, uint16_t par_size, SSD1306_COLOR color);
 void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
 void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
+
+/* Character spacing helpers (pixels between characters) */
+void ssd1306_SetCharSpacing(uint8_t spacing);
+uint8_t ssd1306_GetCharSpacing(void);
 
 /**
  * @brief Invert color of pixels in rectangle (include border)

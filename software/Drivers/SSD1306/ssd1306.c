@@ -194,6 +194,7 @@ void ssd1306_Init(void) {
     // Set default values for screen object
     SSD1306.CurrentX = 0;
     SSD1306.CurrentY = 0;
+    SSD1306.CharSpacing = 1; // default one pixel between characters
     
     SSD1306.Initialized = 1;
 }
@@ -317,11 +318,22 @@ char ssd1306_WriteChar(char ch, SSD1306_Font_t Font, SSD1306_COLOR color) {
         }
     }
     
-    // The current space is now taken
+    // The current space is now taken; advance cursor by character width plus spacing
     SSD1306.CurrentX += char_width;
+    /* Add extra spacing between characters (doesn't prevent last-char placement) */
+    SSD1306.CurrentX += SSD1306.CharSpacing;
     
     // Return written char for validation
     return ch;
+}
+
+/* Set/get character spacing (in pixels) */
+void ssd1306_SetCharSpacing(uint8_t spacing) {
+    SSD1306.CharSpacing = spacing;
+}
+
+uint8_t ssd1306_GetCharSpacing(void) {
+    return SSD1306.CharSpacing;
 }
 
 /* Write full string to screenbuffer */
