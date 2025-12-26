@@ -3,15 +3,15 @@
 convert_font.py
 
 Convert a TTF/OTF font to a C source file compatible with the SSD1306 font format used in this repo.
-Generates a .c file with a static uint16_t array (one uint16 per row) and an SSD1306_Font_t instance.
+Generates a .c file with a static uint32_t array (one uint32 per row) and an SSD1306_Font_t instance.
 
 Usage:
   python convert_font.py input.ttf --size 11 [--width 11] [--fixed] [-o out.c]
 
 Notes:
 - Renders ASCII characters 32..126 by default.
-- Each glyph is stored as `height` uint16_t values (rows top->bottom). Bit 15 is leftmost pixel.
-- Maximum width is 16 (rows are 16-bit values). Widths >16 will be cropped.
+- Each glyph is stored as `height` uint32_t values (rows top->bottom). Bit 31 is leftmost pixel.
+- Maximum width is 32 (rows are 32-bit values). Widths >32 will be cropped.
 
 Requires Pillow: pip install pillow
 """
@@ -31,6 +31,7 @@ except Exception:
 
 ASCII_START = 32
 ASCII_END = 126
+MAX_FONT_WIDTH = 32
 
 
 def sanitize(s):
@@ -42,7 +43,7 @@ def sanitize(s):
 
 
 def render_glyph_rows(font, ch, width, height, threshold=128):
-    # Draw glyph to temporary image and return list of `height` 16-bit row ints (left-aligned)
+    # Draw glyph to temporary image and return list of `height` 32-bit row ints (left-aligned)
     img_w = max(width, 1)
     im = Image.new('L', (img_w, height), 0)
     draw = ImageDraw.Draw(im)
@@ -59,7 +60,7 @@ def render_glyph_rows(font, ch, width, height, threshold=128):
     if glyph_w > width:
         # crop to width
         glyph_w = width
-    # For each row, compute 16-bit value
+    # For each row, compute 32-bit value (bit 31 = leftmost)
     for y in range(height):
         rv = 0
         for x in range(width):
@@ -69,8 +70,8 @@ def render_glyph_rows(font, ch, width, height, threshold=128):
             else:
                 px = im.getpixel((src_x, y))
             if px >= threshold:
-                rv |= (1 << (15 - x))
-        rows.append(rv & 0xFFFF)
+                rv |= (1 << (31 - x))
+        rows.append(rv & 0xFFFFFFFF)
     return rows
 
 
@@ -147,8 +148,8 @@ def find_min_size_for_font(infile, max_search_size=72, threshold=128, min_glyph_
             if max_w > 0 and height > 0:
                 return s
         else:
-            # cap request to 16 since our glyphs are limited to 16px
-            target = min(min_glyph_width, 16)
+            # cap request to MAX_FONT_WIDTH since our glyphs are limited by our row size
+            target = min(min_glyph_width, MAX_FONT_WIDTH)
             if max_w >= target and height > 0:
                 return s
     return None
@@ -174,11 +175,11 @@ def generate_font_files_for_size(infile, base_camel, base_raw, base_cap, size, w
             max_w = w
 
     if width_arg is None:
-        width = min(16, max_w)
+        width = min(MAX_FONT_WIDTH, max_w)
     else:
-        width = min(16, width_arg)
-        if width_arg > 16:
-            print('Warning: requested width > 16, cropping to 16')
+        width = min(MAX_FONT_WIDTH, width_arg)
+        if width_arg > MAX_FONT_WIDTH:
+            print(f'Warning: requested width > {MAX_FONT_WIDTH}, cropping to {MAX_FONT_WIDTH}')
 
     print('Generating size:', size, 'ascent/descent:', ascent, descent, '-> height', height)
     print('Computed max glyph width:', max_w, '-> using width:', width)
@@ -235,11 +236,11 @@ def generate_font_files_for_size(infile, base_camel, base_raw, base_cap, size, w
 
         f.write(f"#ifdef {guard}\n")
 
-        f.write(f"static const uint16_t {data_name}[] = {{\n")
+        f.write(f"static const uint32_t {data_name}[] = {{\n")
         # Write one glyph per line
         for idx, rows in enumerate(glyphs):
             ch = chr(ASCII_START + idx)
-            row_strs = [f"0x{r:04X}" for r in rows]
+            row_strs = [f"0x{r:08X}" for r in rows]
             line = ', '.join(row_strs)
             if 32 <= ord(ch) <= 126 and ch not in ('\\', "'"):
                 comment_char = ch
@@ -291,11 +292,11 @@ def generate_font_block_strings(infile, base_camel, base_raw, base_cap, size, wi
             max_w = w
 
     if width_arg is None:
-        width = min(16, max_w)
+        width = min(MAX_FONT_WIDTH, max_w)
     else:
-        width = min(16, width_arg)
-        if width_arg > 16:
-            print('Warning: requested width > 16, cropping to 16')
+        width = min(MAX_FONT_WIDTH, width_arg)
+        if width_arg > MAX_FONT_WIDTH:
+            print(f'Warning: requested width > {MAX_FONT_WIDTH}, cropping to {MAX_FONT_WIDTH}')
 
     # build glyphs and widths
     for c in range(ASCII_START, ASCII_END + 1):
@@ -319,10 +320,10 @@ def generate_font_block_strings(infile, base_camel, base_raw, base_cap, size, wi
     # build c block as string
     lines = []
     lines.append(f"/* size {size}pt -> {width}x{height} */")
-    lines.append(f"static const uint16_t {data_name}[] = {{")
+    lines.append(f"static const uint32_t {data_name}[] = {{")
     for idx, rows in enumerate(glyphs):
         ch = chr(ASCII_START + idx)
-        row_strs = [f"0x{r:04X}" for r in rows]
+        row_strs = [f"0x{r:08X}" for r in rows]
         line = ', '.join(row_strs)
         if 32 <= ord(ch) <= 126 and ch not in ('\\', "'"):
             comment_char = ch
@@ -584,7 +585,7 @@ def main():
     p = argparse.ArgumentParser(description='Convert a TTF/OTF to SSD1306 C font')
     p.add_argument('infile', help='input .ttf or .otf font file')
     p.add_argument('-s', '--size', type=int, default=11, help='point size for rendering (default: 11)')
-    p.add_argument('-w', '--width', type=int, default=None, help='fixed glyph width in pixels (<=16). If omitted, computed and capped at 16')
+    p.add_argument('-w', '--width', type=int, default=None, help='fixed glyph width in pixels (<=32). If omitted, computed and capped at 32')
     p.add_argument('-f', '--fixed', action='store_true', help='generate a monospaced font (char_width=NULL)')
     p.add_argument('-o', '--output', default=None, help='output .c file (default: <infile>_<size>pt_<WxH>.c or for ranges <base>_<min>to<max>pt.c)')
     p.add_argument('-n', '--name', default=None, help='base name for generated font variables (default: input basename)')
@@ -627,9 +628,9 @@ def main():
         # first try to find a point size that reaches the requested min glyph width
         min_size = None
         if min_width_target is not None:
-            if min_width_target > 16:
-                print('Requested min-width > 16, capping to 16 (max glyph width).')
-            capped = min(min_width_target, 16)
+            if min_width_target > MAX_FONT_WIDTH:
+                print(f'Requested min-width > {MAX_FONT_WIDTH}, capping to {MAX_FONT_WIDTH} (max glyph width).')
+            capped = min(min_width_target, MAX_FONT_WIDTH)
             print(f'Searching for smallest point size with glyph width >= {capped} px (max search {args.max_search_size})')
             min_size = find_min_size_for_font(infile, args.max_search_size, args.threshold, min_glyph_width=capped)
             if min_size is None:

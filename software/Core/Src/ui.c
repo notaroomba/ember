@@ -633,8 +633,8 @@ void ui_show_home(ui_menu_t *menu)
     text_screen.text = "Push Button";
 
     // Prefer Ethnocentric title font if available
-#ifdef SSD1306_ETHNOCENTRIC_FONT_16x18
-    text_screen.font = &fontEthnocentric13pt16x13;
+#ifdef SSD1306_ETHNOCENTRIC_FONT_32x24
+    text_screen.font = &fontEthnocentric25pt32x24;
 #else
     text_screen.font = &Font_11x18;
 #endif

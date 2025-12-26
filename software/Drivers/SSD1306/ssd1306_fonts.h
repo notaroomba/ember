@@ -65,23 +65,23 @@ extern const SSD1306_Font_t fontBlenderProBold18pt13x19;
 #ifdef SSD1306_BLENDER_PRO_BOLD_FONT_14x20
 extern const SSD1306_Font_t fontBlenderProBold19pt14x20;
 #endif
-#ifdef SSD1306_ETHNOCENTRIC_FONT_16x13
-extern const SSD1306_Font_t fontEthnocentric13pt16x13;
+#ifdef SSD1306_ETHNOCENTRIC_FONT_32x24
+extern const SSD1306_Font_t fontEthnocentric25pt32x24;
 #endif
-#ifdef SSD1306_ETHNOCENTRIC_FONT_16x14
-extern const SSD1306_Font_t fontEthnocentric14pt16x14;
+#ifdef SSD1306_ETHNOCENTRIC_FONT_32x25
+extern const SSD1306_Font_t fontEthnocentric26pt32x25;
 #endif
-#ifdef SSD1306_ETHNOCENTRIC_FONT_16x15
-extern const SSD1306_Font_t fontEthnocentric15pt16x15;
+#ifdef SSD1306_ETHNOCENTRIC_FONT_32x26
+extern const SSD1306_Font_t fontEthnocentric27pt32x26;
 #endif
-#ifdef SSD1306_ETHNOCENTRIC_FONT_16x16
-extern const SSD1306_Font_t fontEthnocentric16pt16x16;
+#ifdef SSD1306_ETHNOCENTRIC_FONT_32x27
+extern const SSD1306_Font_t fontEthnocentric28pt32x27;
 #endif
-#ifdef SSD1306_ETHNOCENTRIC_FONT_16x17
-extern const SSD1306_Font_t fontEthnocentric17pt16x17;
+#ifdef SSD1306_ETHNOCENTRIC_FONT_32x28
+extern const SSD1306_Font_t fontEthnocentric29pt32x28;
 #endif
-#ifdef SSD1306_ETHNOCENTRIC_FONT_16x18
-extern const SSD1306_Font_t fontEthnocentric18pt16x18;
+#ifdef SSD1306_ETHNOCENTRIC_FONT_32x29
+extern const SSD1306_Font_t fontEthnocentric30pt32x29;
 #endif
 #ifdef SSD1306_MINECRAFT_FONT_10x12
 extern const SSD1306_Font_t fontMinecraft11pt10x12;

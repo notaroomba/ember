@@ -179,7 +179,7 @@ typedef struct {
 typedef struct {
 	const uint8_t width;                /**< Font width in pixels */
 	const uint8_t height;               /**< Font height in pixels */
-	const uint16_t *const data;         /**< Pointer to font data array */
+	const uint32_t *const data;         /**< Pointer to font data array (rows stored in 32-bit values, bit31=leftmost) */
     const uint8_t *const char_width;    /**< Proportional character width in pixels (NULL for monospaced) */
 } SSD1306_Font_t;
 

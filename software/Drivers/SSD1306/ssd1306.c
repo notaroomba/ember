@@ -310,7 +310,7 @@ char ssd1306_WriteChar(char ch, SSD1306_Font_t Font, SSD1306_COLOR color) {
     for(i = 0; i < Font.height; i++) {
         b = Font.data[(ch - 32) * Font.height + i];
         for(j = 0; j < char_width; j++) {
-            if((b << j) & 0x8000)  {
+            if((b << j) & 0x80000000UL)  {
                 ssd1306_DrawPixel(SSD1306.CurrentX + j, (SSD1306.CurrentY + i), (SSD1306_COLOR) color);
             } else {
                 ssd1306_DrawPixel(SSD1306.CurrentX + j, (SSD1306.CurrentY + i), (SSD1306_COLOR)!color);
