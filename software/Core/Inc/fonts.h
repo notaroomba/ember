@@ -5,6 +5,8 @@
 #include "ssd1306_fonts.h"
 #include <stdint.h>
 #include <stddef.h>
+#include "blenderProBold.h"
+#include "minecraft.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -767,3 +767,11 @@ void ui_show_text(const char *title, const char *text, const SSD1306_Font_t *tit
     text_screen.subtitle = NULL;
     ui_push_screen(UI_SCR_TEXT, &text_screen);
 }
+
+// Update the text of the current text screen (if active)
+void ui_update_text(const char *text) {
+    if (current_type == UI_SCR_TEXT) {
+        text_screen.text = text;
+        request_render();
+    }
+}

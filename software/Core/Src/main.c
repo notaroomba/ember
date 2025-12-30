@@ -39,10 +39,13 @@
 
 #include "swallow2.h"
 
+#define SSD1306_BLENDER_PRO_BOLD_FONT_13x19
+
 #include "ssd1306.h"
 #include "ssd1306_tests.h"
 #include <stdlib.h>
 #include "ui.h"
+#include "blenderProBold.h"
 #include "fonts.h"
 /* USER CODE END Includes */
 
@@ -85,6 +88,8 @@ TPS25730_Handle *tps_handle = NULL;
 Speaker_Handle *speaker = NULL;
 TMP116_Handle_t tmp116;
 static uint32_t last_temp_read = 0;
+
+static uint32_t last_tc_poll = 0;
 static uint32_t last_nfc_poll = 0;
 static uint32_t last_ina226_poll = 0;
 // Encoder tone settings (configurable)
@@ -100,6 +105,13 @@ static const uint8_t TELEPORT_RADIUS = 10; // circle radius
 
 // Forward-declare menu callback
 static void main_menu_select_cb(uint8_t idx, void *ctx);
+
+// Settings screen state and helpers
+static volatile bool settings_active = false;
+static volatile int settings_heater_percent = 0;
+static void settings_show(void);
+static void settings_update_display(void);
+static void settings_on_ok(void *ctx);
 
 SSD1306_t SSD1306_Disp;
 /* USER CODE END PV */
@@ -133,8 +145,9 @@ static void main_menu_select_cb(uint8_t idx, void *ctx) {
         case 0: // Home
             ui_show_home(m);
             break;
-        case 1: { // Status - show USB-C PD voltage & amperage
-            static char status_buf[64];
+        case 1: { // Status - show USB-C PD voltage & amperage + temperature
+            static char status_buf[128];
+            int len = 0;
             if (tps_handle != NULL) {
                 uint32_t voltage_mv = 0, current_ma = 0;
                 if (TPS25730_GetActiveVoltage(tps_handle, &voltage_mv, &current_ma)) {
@@ -142,18 +155,36 @@ static void main_menu_select_cb(uint8_t idx, void *ctx) {
                     uint32_t vfrac = (voltage_mv % 1000) / 10; // hundredths
                     uint32_t amps_int = current_ma / 1000;
                     uint32_t amps_frac = (current_ma % 1000) / 10; // hundredths
-                    snprintf(status_buf, sizeof(status_buf), "%lu.%02lu V\n%lu.%02lu A (%lumA)", volts, vfrac, amps_int, amps_frac, current_ma);
+                    len = snprintf(status_buf, sizeof(status_buf), "%lu.%02lu V\n%lu.%02lu A (%lumA)", volts, vfrac, amps_int, amps_frac, current_ma);
                 } else {
-                    snprintf(status_buf, sizeof(status_buf), "USB-C PD: unavailable");
+                    len = snprintf(status_buf, sizeof(status_buf), "USB-C PD: unavailable");
                 }
             } else {
-                snprintf(status_buf, sizeof(status_buf), "USB-C PD: not initialized");
+                len = snprintf(status_buf, sizeof(status_buf), "USB-C PD: not initialized");
             }
-            ui_show_text("USB-C PD", status_buf, &Font_11x18, &Font_6x8, NULL, NULL);
+            if (len < 0) len = 0;
+            if (len > (int)sizeof(status_buf) - 1) len = sizeof(status_buf) - 1;
+
+            float temperature;
+            if (TMP116_GetTemperature(&tmp116, &temperature) == TMP116_OK) {
+                int rem = (int)sizeof(status_buf) - len;
+                if (rem > 1) {
+                    int n = snprintf(status_buf + len, rem, "\nTemp: %.2f C", temperature);
+                    if (n > 0) len += n;
+                }
+            } else {
+                int rem = (int)sizeof(status_buf) - len;
+                if (rem > 1) {
+                    int n = snprintf(status_buf + len, rem, "\nTemp: N/A");
+                    if (n > 0) len += n;
+                }
+            }
+
+            ui_show_text("Status", status_buf, &Font_11x18, &Font_6x8, NULL, NULL);
             break;
         }
         case 2: // Settings
-            ui_show_text("Settings", "No settings yet\nPress and hold to return", &Font_11x18, &Font_6x8, NULL, NULL);
+            settings_show();
             break;
         case 3: // About
             ui_show_text("About", "Ember V1\n@NotARoomba", &Font_11x18, &Font_6x8, NULL, NULL);
@@ -166,6 +197,33 @@ static void main_menu_select_cb(uint8_t idx, void *ctx) {
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// Static buffer used by settings UI so the pointer remains valid
+static char settings_buf[128];
+
+// Show the settings screen and initialize value from current heater percent
+static void settings_show(void) {
+    settings_heater_percent = (int)(Heater_GetPercent() + 0.5f);
+    snprintf(settings_buf, sizeof(settings_buf), "Heater: %d%%\nShort press to save\nLong press to return", settings_heater_percent);
+    ui_show_text("Settings", settings_buf, &Font_11x18, &Font_6x8, settings_on_ok, NULL);
+    settings_active = true;
+}
+
+// Update the displayed text - update current text screen in-place
+static void settings_update_display(void) {
+    snprintf(settings_buf, sizeof(settings_buf), "Heater: %d%%\nShort press to save\nLong press to return", settings_heater_percent);
+    ui_update_text(settings_buf);
+}
+
+// Save callback (short press) - apply and close
+static void settings_on_ok(void *ctx) {
+    (void)ctx;
+    print("Settings: Heater set to %d%%\r\n", settings_heater_percent);
+    Heater_SetPercent((float)settings_heater_percent);
+    settings_active = false;
+    // Close the settings screen
+    ui_handle_event(UI_EVT_BACK);
+}
 
 /* USER CODE END 0 */
 
@@ -252,8 +310,10 @@ int main(void)
   
   // Initialize heater PWM control
   Heater_Init();
-  Heater_Off();
-  
+  // Heater_Off();
+
+  Heater_SetPercent(0);
+
   // Initialize TMP119 temperature sensor on I2C3
   if (TMP116_Init(&tmp116, &hi2c3, TMP116_I2C_ADDRESS) == TMP116_OK) {
     print("TMP119: OK\r\n");
@@ -422,6 +482,17 @@ int main(void)
     Update_LEDs();
     Speaker_Update(speaker);
 
+    // Poll Thermocouple (MAX6675) for temperature every 500ms
+    if ((HAL_GetTick() - last_tc_poll) >= 500) {
+      last_tc_poll = HAL_GetTick();
+       float tc_temp = Thermocouple_ReadCelsius();
+      if (Thermocouple_Ok()) {
+        print("Thermocouple: %.2f C\r\n", tc_temp);
+      } else {
+        print("Thermocouple: read failed\r\n");
+      }
+    }
+
     // let UI process events and redraw when ready
     ui_tick();
 
@@ -440,34 +511,52 @@ int main(void)
     // Handle encoder events
     if (input_encoder_cw) {
       input_encoder_cw = false;
-      // Notify UI (rotary clockwise -> DOWN)
-      ui_handle_event(UI_EVT_DOWN);
 
-      print("Encoder CW, position: %ld\r\n", input_encoder_position);
-      // Decrease pitch by 50 Hz per clockwise step
-      encoder_tone_steps--;
-      int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
-      if (freq < 20) freq = 20;
-      if (freq > 20000) freq = 20000;
-      encoder_tone_current_freq = (uint32_t)freq;
-      if (speaker != NULL) {
-        Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+      if (settings_active) {
+          // Counter-clockwise -> increase percentage
+          if (settings_heater_percent < 100) settings_heater_percent++;
+          settings_update_display();
+          print("Settings: Heater %d%%\r\n", settings_heater_percent);
+          if (speaker != NULL) { Speaker_Beep(speaker, 1000, 30, 10, 1); }
+      } else {
+          // Notify UI (rotary clockwise -> DOWN)
+          ui_handle_event(UI_EVT_DOWN);
+
+          print("Encoder CW, position: %ld\r\n", input_encoder_position);
+          // Decrease pitch by 50 Hz per clockwise step
+          encoder_tone_steps--;
+          int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
+          if (freq < 20) freq = 20;
+          if (freq > 20000) freq = 20000;
+          encoder_tone_current_freq = (uint32_t)freq;
+          if (speaker != NULL) {
+            Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+          }
       }
     }
     if (input_encoder_ccw) {
       input_encoder_ccw = false;
-      // Notify UI (rotary counter-clockwise -> UP)
-      ui_handle_event(UI_EVT_UP);
 
-      print("Encoder CCW, position: %ld\r\n", input_encoder_position);
-      // Increase pitch by 50 Hz per counter-clockwise step
-      encoder_tone_steps++;
-      int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
-      if (freq < 20) freq = 20;
-      if (freq > 20000) freq = 20000;
-      encoder_tone_current_freq = (uint32_t)freq;
-      if (speaker != NULL) {
-        Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+      if (settings_active) {
+          // Clockwise -> decrease percentage
+          if (settings_heater_percent > 0) settings_heater_percent--;
+          settings_update_display();
+          print("Settings: Heater %d%%\r\n", settings_heater_percent);
+          if (speaker != NULL) { Speaker_Beep(speaker, 1200, 30, 10, 1); }
+      } else {
+          // Notify UI (rotary counter-clockwise -> UP)
+          ui_handle_event(UI_EVT_UP);
+
+          print("Encoder CCW, position: %ld\r\n", input_encoder_position);
+          // Increase pitch by 50 Hz per counter-clockwise step
+          encoder_tone_steps++;
+          int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
+          if (freq < 20) freq = 20;
+          if (freq > 20000) freq = 20000;
+          encoder_tone_current_freq = (uint32_t)freq;
+          if (speaker != NULL) {
+            Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+          }
       }
     }
 
@@ -491,9 +580,15 @@ int main(void)
     
     if (input_button_long_pressed) {
       input_button_long_pressed = false;
-      ui_handle_event(UI_EVT_BACK);
-      print("Button long press!\r\n");
-      // TODO: Handle long press (e.g., back/cancel)
+      if (settings_active) {
+          settings_active = false;
+          ui_handle_event(UI_EVT_BACK);
+          print("Settings: canceled\r\n");
+      } else {
+        ui_handle_event(UI_EVT_BACK);
+          print("Button long press!\r\n");
+          // TODO: Additional global long-press behavior
+      }
     }
     // Poll temperature sensor periodically
     // if ((HAL_GetTick() - last_temp_read) >= TEMP_READ_INTERVAL_MS) {
@@ -561,18 +656,7 @@ int main(void)
     // }
 
 
-    // Poll Thermocouple (MAX6675) for temperature every 500ms
-    // static uint32_t last_tc_poll = 0;
-    // if ((HAL_GetTick() - last_tc_poll) >= 500) {
-    //   last_tc_poll = HAL_GetTick();
-    //   float tc_temp = Thermocouple_ReadCelsius();
-    //   if (Thermocouple_Ok()) {
-    //     print("Thermocouple: %.2f C\r\n", tc_temp);
-    //   } else {
-    //     print("Thermocouple: read failed\r\n");
-    //   }
-    // }
-
+    
     // Other main loop tasks here...
     
     /* USER CODE END WHILE */

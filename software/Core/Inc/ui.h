@@ -81,6 +81,9 @@ void ui_show_home(ui_menu_t *menu); // show branded home screen that can jump to
 void ui_show_text(const char *title, const char *text, const SSD1306_Font_t *title_font, const SSD1306_Font_t *hint_font, void (*on_ok)(void *), void *ctx);
 void ui_graph_push(ui_graph_t *g, int16_t value);
 
+// Update the text of the currently displayed text screen (if any)
+void ui_update_text(const char *text);
+
 // Button screen helper
 void ui_start_buttons(ui_button_t *buttons, uint8_t count, uint8_t initial_selected);
 

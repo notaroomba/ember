@@ -84,9 +84,9 @@ Features:
 
 The heatbed uses JLCPCB's flexible heater technology for cost-effective large-area heating.
 
-The flexible heater connects to the main PCB via screw terminals and sits on an aluminum sheet with leg mounts to protect the work surface.
+The flexible heater connects to the main PCB via screw terminals!
 
-<img src="assets/heatbed.png" alt="Heatbed" width="800"/>
+<img src="assets/flexheater.png" alt="Heatbed" width="800"/>
 
 ## 3D Renders
 
