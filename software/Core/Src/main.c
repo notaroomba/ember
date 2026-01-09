@@ -517,21 +517,21 @@ int main(void)
           if (settings_heater_percent < 100) settings_heater_percent++;
           settings_update_display();
           print("Settings: Heater %d%%\r\n", settings_heater_percent);
-          if (speaker != NULL) { Speaker_Beep(speaker, 1000, 30, 10, 1); }
+          // if (speaker != NULL) { Speaker_Beep(speaker, 1000, 30, 10, 1); }
       } else {
           // Notify UI (rotary clockwise -> DOWN)
           ui_handle_event(UI_EVT_DOWN);
 
           print("Encoder CW, position: %ld\r\n", input_encoder_position);
           // Decrease pitch by 50 Hz per clockwise step
-          encoder_tone_steps--;
-          int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
-          if (freq < 20) freq = 20;
-          if (freq > 20000) freq = 20000;
-          encoder_tone_current_freq = (uint32_t)freq;
-          if (speaker != NULL) {
-            Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
-          }
+          // encoder_tone_steps--;
+          // int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
+          // if (freq < 20) freq = 20;
+          // if (freq > 20000) freq = 20000;
+          // encoder_tone_current_freq = (uint32_t)freq;
+          // if (speaker != NULL) {
+          //   Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+          // }
       }
     }
     if (input_encoder_ccw) {
@@ -542,21 +542,21 @@ int main(void)
           if (settings_heater_percent > 0) settings_heater_percent--;
           settings_update_display();
           print("Settings: Heater %d%%\r\n", settings_heater_percent);
-          if (speaker != NULL) { Speaker_Beep(speaker, 1200, 30, 10, 1); }
+          // if (speaker != NULL) { Speaker_Beep(speaker, 1200, 30, 10, 1); }
       } else {
           // Notify UI (rotary counter-clockwise -> UP)
           ui_handle_event(UI_EVT_UP);
 
           print("Encoder CCW, position: %ld\r\n", input_encoder_position);
           // Increase pitch by 50 Hz per counter-clockwise step
-          encoder_tone_steps++;
-          int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
-          if (freq < 20) freq = 20;
-          if (freq > 20000) freq = 20000;
-          encoder_tone_current_freq = (uint32_t)freq;
-          if (speaker != NULL) {
-            Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
-          }
+          // encoder_tone_steps++;
+          // int32_t freq = (int32_t)encoder_tone_base_freq + (int32_t)encoder_tone_steps * (int32_t)encoder_tone_step_hz;
+          // if (freq < 20) freq = 20;
+          // if (freq > 20000) freq = 20000;
+          // encoder_tone_current_freq = (uint32_t)freq;
+          // if (speaker != NULL) {
+          //   Speaker_Beep(speaker, (uint16_t)freq, 30, 10, 1);
+          // }
       }
     }
 
