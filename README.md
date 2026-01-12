@@ -27,7 +27,10 @@ A high-performance USB-C powered reflow hotplate with Bluetooth connectivity and
   <a href="#license">License</a>
 </p>
 
-<img src="blender/render.png" alt="Ember Render" width="800"/>
+
+<img src="assets/ember.png" alt="Ember" width="800"/>
+
+<!-- <img src="blender/render.png" alt="Ember Render" width="800"/> -->
 
 ## Key Features
 
